@@ -37,8 +37,8 @@ interface Props {
 }
 
 const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { userName } = route.params;
   const dispatch = useAppDispatch();
+  const { name: userName } = useAppSelector((state) => state.user);
   const { 
     capturedImages, 
     scanningProgress, 
@@ -57,7 +57,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
 
   useEffect(() => {
     // Start scan session when component mounts
-    if (!currentSession) {
+    if (!currentSession && userName) {
       dispatch(startScanSession({ userName }));
     }
     
@@ -273,7 +273,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
               />
             </View>
             <Text style={styles.title}>Scan Preparation</Text>
-            <Text style={styles.subtitle}>Hello {userName}!</Text>
+            <Text style={styles.subtitle}>Hello {userName || 'User'}!</Text>
           </View>
 
           <View style={styles.thumbnailSection}>
@@ -524,8 +524,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     left: 20,
-    right: 20,
-    alignItems: 'center',
+    right: 20,    
   },
   captureButton: {
     backgroundColor: '#823280',

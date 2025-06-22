@@ -93,7 +93,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     dispatch(setUserRegistered(true));
 
     // Navigate directly to scan preparation checklist
-    navigation.navigate('ScanPrep', { userName: trimmedName });
+    navigation.navigate('ScanPrep');
   };
 
   const handleBack = () => {

@@ -33,8 +33,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const handleScanFingers = () => {
     console.log('Navigating to Camera screen');
     if (isRegistered && name) {
-      // If user is registered, go directly to PreScan
-      navigation.navigate('PreScan', { userName: name });
+      // If user is registered, go directly to ScanPrep
+      navigation.navigate('ScanPrep');
     } else {
       // If not registered, go to Camera for quick scan
       navigation.navigate('Camera', {});

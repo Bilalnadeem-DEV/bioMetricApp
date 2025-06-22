@@ -14,7 +14,6 @@ import { store } from './src/store/store';
 
 import HomeScreen from './src/screens/HomeScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
-import PreScanScreen from './src/screens/PreScanScreen';
 import ScanPrepScreen from './src/screens/ScanPrepScreen';
 import CameraScreen from './src/screens/CameraScreen';
 import ImagePreviewScreen from './src/screens/ImagePreviewScreen';
@@ -24,8 +23,7 @@ export type RootStackParamList = {
   Splash: undefined;
   Home: undefined;
   Register: undefined;
-  PreScan: { userName: string };
-  ScanPrep: { userName: string };
+  ScanPrep: undefined;
   Camera: { imageIndex?: number; onImageCaptured?: (imageUri: string, index: number) => void };
   ImagePreview: { imageUri: string };
 };
@@ -65,13 +63,6 @@ function App(): React.JSX.Element {
             component={RegisterScreen}
             listeners={{
               focus: () => console.log('RegisterScreen focused'),
-            }}
-          />
-          <Stack.Screen 
-            name="PreScan" 
-            component={PreScanScreen}
-            listeners={{
-              focus: () => console.log('PreScanScreen focused'),
             }}
           />
           <Stack.Screen 
