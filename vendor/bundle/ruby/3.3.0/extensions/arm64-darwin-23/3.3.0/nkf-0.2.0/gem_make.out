@@ -1,0 +1,18 @@
+current directory: /Users/bilal/Desktop/MU/jazz-bio-metric-app/jazzBioApp/vendor/bundle/ruby/3.3.0/gems/nkf-0.2.0/ext/nkf
+/Users/bilal/.rbenv/versions/3.3.3/bin/ruby extconf.rb
+creating Makefile
+
+current directory: /Users/bilal/Desktop/MU/jazz-bio-metric-app/jazzBioApp/vendor/bundle/ruby/3.3.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250619-37354-8hqvx1 sitelibdir\=./.gem.20250619-37354-8hqvx1 clean
+
+current directory: /Users/bilal/Desktop/MU/jazz-bio-metric-app/jazzBioApp/vendor/bundle/ruby/3.3.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250619-37354-8hqvx1 sitelibdir\=./.gem.20250619-37354-8hqvx1
+compiling nkf.c
+linking shared-object nkf.bundle
+
+current directory: /Users/bilal/Desktop/MU/jazz-bio-metric-app/jazzBioApp/vendor/bundle/ruby/3.3.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250619-37354-8hqvx1 sitelibdir\=./.gem.20250619-37354-8hqvx1 install
+/usr/bin/install -c -m 0755 nkf.bundle ./.gem.20250619-37354-8hqvx1
+
+current directory: /Users/bilal/Desktop/MU/jazz-bio-metric-app/jazzBioApp/vendor/bundle/ruby/3.3.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250619-37354-8hqvx1 sitelibdir\=./.gem.20250619-37354-8hqvx1 clean

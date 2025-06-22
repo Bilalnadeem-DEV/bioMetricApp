@@ -1,0 +1,6 @@
+module Pods_jazzBioApp {
+  umbrella header "Pods-jazzBioApp-umbrella.h"
+
+  export *
+  module * { export * }
+}
