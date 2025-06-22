@@ -18,6 +18,7 @@ import ScanPrepScreen from './src/screens/ScanPrepScreen';
 import CameraScreen from './src/screens/CameraScreen';
 import ImagePreviewScreen from './src/screens/ImagePreviewScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import NewScreen from './src/screens/NewScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   ScanPrep: undefined;
   Camera: { imageIndex?: number; onImageCaptured?: (imageUri: string, index: number) => void };
   ImagePreview: { imageUri: string };
+  NewScreen: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -84,6 +86,13 @@ function App(): React.JSX.Element {
             component={ImagePreviewScreen}
             listeners={{
               focus: () => console.log('ImagePreviewScreen focused'),
+            }}
+          />
+          <Stack.Screen 
+            name="NewScreen" 
+            component={NewScreen}
+            listeners={{
+              focus: () => console.log('NewScreen focused'),
             }}
           />
         </Stack.Navigator>

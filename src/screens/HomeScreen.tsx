@@ -46,6 +46,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.navigate('Register');
   };
 
+  const handleNewScreen = () => {
+    console.log('Navigating to New screen');
+    navigation.navigate('NewScreen');
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
     const date = new Date(dateString);
@@ -127,6 +132,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             >
               <Text style={styles.buttonText}>
                 {isRegistered ? 'Update Profile' : 'Register'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.button, styles.newScreenButton]} 
+              onPress={handleNewScreen}
+            >
+              <Text style={styles.buttonText}>
+                New Screen
               </Text>
             </TouchableOpacity>
           </View>
@@ -267,6 +280,10 @@ const styles = StyleSheet.create({
   registerButton: { 
     backgroundColor: '#2D1A58',
     borderColor: '#823280',
+  },
+  newScreenButton: {
+    backgroundColor: '#10b981',
+    borderColor: '#059669',
   },
   buttonText: {
     color: '#ffffff',
