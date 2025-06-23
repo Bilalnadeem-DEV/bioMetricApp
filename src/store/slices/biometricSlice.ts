@@ -7,6 +7,8 @@ interface BiometricImage {
   quality?: 'low' | 'medium' | 'high';
   size?: { width: number; height: number };
   fileSize?: number;
+  qualityScore?: number;
+  processingTimestamp?: string;
 }
 
 interface ScanSession {
@@ -98,6 +100,8 @@ const biometricSlice = createSlice({
       quality?: 'low' | 'medium' | 'high';
       size?: { width: number; height: number };
       fileSize?: number;
+      qualityScore?: number;
+      processingTimestamp?: string;
     }>) => {
       const newImage: BiometricImage = {
         uri: action.payload.uri,
@@ -106,6 +110,8 @@ const biometricSlice = createSlice({
         quality: action.payload.quality || 'high',
         size: action.payload.size,
         fileSize: action.payload.fileSize,
+        qualityScore: action.payload.qualityScore,
+        processingTimestamp: action.payload.processingTimestamp,
       };
       
       // Replace existing image at the same index or add new one

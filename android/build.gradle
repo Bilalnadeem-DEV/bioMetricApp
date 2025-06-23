@@ -18,4 +18,14 @@ buildscript {
     }
 }
 
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://www.jitpack.io" }
+        maven { url "https://packagecloud.io/biopassid/FingerprintSDKAndroid/maven2" }
+        maven { url "https://packagecloud.io/biopassid/dlibwrapper/maven2" }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"

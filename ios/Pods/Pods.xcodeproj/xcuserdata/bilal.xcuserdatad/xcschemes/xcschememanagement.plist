@@ -59,6 +59,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>RNFS.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>RNGestureHandler.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -395,6 +400,11 @@
 			<false/>
 		</dict>
 		<key>Yoga.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>biopassid-fingerprint-sdk-react-native.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
