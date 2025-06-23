@@ -1,0 +1,1 @@
+../../../Target Support Files/biopassid-fingerprint-sdk-react-native/biopassid-fingerprint-sdk-react-native-umbrella.h

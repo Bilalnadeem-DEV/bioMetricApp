@@ -1,0 +1,2 @@
+${PODS_ROOT}/Target Support Files/biopassid-fingerprint-sdk-react-native/biopassid-fingerprint-sdk-react-native-xcframeworks.sh
+${PODS_ROOT}/../../node_modules/@biopassid/fingerprint-sdk-react-native/ios/touchlesslib.xcframework
