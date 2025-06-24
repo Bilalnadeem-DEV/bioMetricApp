@@ -205,30 +205,6 @@
         }
       }
     },
-    "react-native-image-filter-kit": {
-      "root": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/react-native-image-filter-kit",
-      "name": "react-native-image-filter-kit",
-      "platforms": {
-        "ios": {
-          "podspecPath": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/react-native-image-filter-kit/react-native-image-filter-kit.podspec",
-          "version": "0.8.0",
-          "configurations": [],
-          "scriptPhases": []
-        },
-        "android": {
-          "sourceDir": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/react-native-image-filter-kit/android",
-          "packageImportPath": "import iyegoroff.imagefilterkit.ImageFilterKitPackage;",
-          "packageInstance": "new ImageFilterKitPackage()",
-          "buildTypes": [],
-          "componentDescriptors": [],
-          "cmakeListsPath": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/react-native-image-filter-kit/android/build/generated/source/codegen/jni/CMakeLists.txt",
-          "cxxModuleCMakeListsModuleName": null,
-          "cxxModuleCMakeListsPath": null,
-          "cxxModuleHeaderName": null,
-          "isPureCxxDependency": false
-        }
-      }
-    },
     "react-native-image-picker": {
       "root": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/react-native-image-picker",
       "name": "react-native-image-picker",
@@ -563,7 +539,7 @@
         {
           "name": "--terminal <string>",
           "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "Apple_Terminal"
+          "default": "vscode"
         },
         {
           "name": "--binary-path <string>",
@@ -731,7 +707,7 @@
         {
           "name": "--terminal <string>",
           "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "Apple_Terminal"
+          "default": "vscode"
         },
         {
           "name": "--appId <string>",

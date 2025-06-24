@@ -1,7 +1,7 @@
-# Redux Setup for BioSecure App
+# Redux Setup for hyperI App
 
 ## Overview
-Redux Toolkit has been successfully integrated into the BioSecure React Native app. The store is configured with two main slices:
+Redux Toolkit has been successfully integrated into the hyperI React Native app. The store is configured with two main slices:
 
 1. **User Slice** - Manages user registration and profile data
 2. **Biometric Slice** - Manages biometric scan data and capture states

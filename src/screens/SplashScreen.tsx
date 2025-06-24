@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
+import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type SplashScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -61,12 +62,11 @@ const SplashScreen: React.FC<Props> = ({ navigation }) => {
       >
         <View style={styles.logoContainer}>
           <Image 
-            source={require('../../assets/images/appIcon.png')} 
+            source={require('../../assets/images/mainAppLogo.jpg')} 
             style={styles.logo}
             resizeMode="contain"
           />
-        </View>
-        <Text style={styles.title}>BioSecure</Text>
+        </View>        
         <Text style={styles.subtitle}>Secure Authentication</Text>
         <View style={styles.loadingContainer}>
           <View style={styles.loadingDot} />
@@ -81,7 +81,7 @@ const SplashScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF5FE',
+    backgroundColor: ColorPalettes.backgrounds.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -90,38 +90,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#2D1A58',
+    width: 150,
+    height: 150,    
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
-    shadowColor: '#823280',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 2,
-    borderColor: '#9CA3AF',
+    marginBottom: 30,    
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 170,
+    height: 170,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     textAlign: 'center',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     textAlign: 'center',
     marginBottom: 50,
     fontWeight: '300',
@@ -135,16 +123,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.brand.primary,
     marginHorizontal: 4,
     opacity: 0.4,
   },
   loadingDotDelay1: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: ColorPalettes.borders.light,
     opacity: 0.7,
   },
   loadingDotDelay2: {
-    backgroundColor: '#2D1A58',
+    backgroundColor: ColorPalettes.brand.secondary,
     opacity: 1,
   },
 });

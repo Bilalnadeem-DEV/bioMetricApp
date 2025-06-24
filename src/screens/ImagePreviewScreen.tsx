@@ -13,6 +13,7 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
+import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -132,7 +133,7 @@ const ImagePreviewScreen: React.FC<ImagePreviewScreenProps> = ({
 
     // Apply grayscale effect using tintColor
     if (isGrayscale) {
-      style.tintColor = '#888888';
+      style.tintColor = ColorPalettes.text.disabled;
     }
 
     return style;
@@ -157,7 +158,7 @@ const ImagePreviewScreen: React.FC<ImagePreviewScreenProps> = ({
             style={[
               styles.contrastOverlay,
               { 
-                backgroundColor: contrast > 1 ? 'transparent' : 'rgba(128,128,128,0.3)',
+                backgroundColor: contrast > 1 ? ColorPalettes.transparent.clear : ColorPalettes.transparent.black30,
                 opacity: Math.abs(contrast - 1) * 0.5
               }
             ]} 
@@ -338,7 +339,7 @@ const ImagePreviewScreen: React.FC<ImagePreviewScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0B0D', // SWSAM dark background
+    backgroundColor: ColorPalettes.backgrounds.overlayDark, // Dark background
   },
   imageContainer: {
     flex: 1,
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(10, 11, 13, 0.95)', // SWSAM dark with transparency
+    backgroundColor: ColorPalettes.backgrounds.overlayAccent, // Dark with transparency
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 50,
@@ -365,7 +366,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   controlsTitle: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 20,
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   controlLabel: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sliderButton: {
-    backgroundColor: '#1E40AF', // SWSAM blue
+    backgroundColor: ColorPalettes.interactive.info, // Blue button
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 25,
@@ -397,12 +398,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sliderButtonText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 18,
     fontWeight: '700',
   },
   sliderValue: {
-    backgroundColor: 'rgba(30, 64, 175, 0.1)', // Light SWSAM blue background
+    backgroundColor: ColorPalettes.transparent.brand10, // Light blue background
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginHorizontal: 15,
@@ -410,10 +411,10 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1E40AF',
+    borderColor: ColorPalettes.interactive.info,
   },
   sliderValueText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 16,
     fontWeight: '600',
   },
@@ -425,25 +426,25 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
-    backgroundColor: 'rgba(55, 65, 81, 0.9)', // SWSAM gray
+    backgroundColor: ColorPalettes.transparent.black20, // Gray background
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 25,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: ColorPalettes.borders.light,
   },
   filterButtonText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 16,
     fontWeight: '600',
   },
   filterButtonActive: {
-    backgroundColor: '#1E40AF', // SWSAM blue
-    borderColor: '#1E40AF',
+    backgroundColor: ColorPalettes.interactive.info, // Blue background
+    borderColor: ColorPalettes.interactive.info,
   },
   filterButtonTextActive: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontWeight: '700',
   },
   presetGroup: {
@@ -454,34 +455,34 @@ const styles = StyleSheet.create({
   },
   presetButton: {
     flex: 1,
-    backgroundColor: '#1E40AF', // SWSAM blue
+    backgroundColor: ColorPalettes.interactive.info, // Blue background
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 25,
     alignItems: 'center',
-    shadowColor: '#1E40AF',
+    shadowColor: ColorPalettes.interactive.info,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   presetButtonText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 16,
     fontWeight: '700',
   },
   resetButton: {
     flex: 1,
-    backgroundColor: 'rgba(55, 65, 81, 0.9)', // SWSAM gray
+    backgroundColor: ColorPalettes.transparent.black20, // Gray background
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 25,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: ColorPalettes.borders.light,
   },
   resetButtonText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 16,
     fontWeight: '600',
   },
@@ -495,19 +496,19 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   enhanceToggleButton: {
-    backgroundColor: '#1E40AF', // SWSAM blue
+    backgroundColor: ColorPalettes.interactive.info, // Blue background
     paddingVertical: 15,
     paddingHorizontal: 25,
     borderRadius: 25,
     alignItems: 'center',
-    shadowColor: '#1E40AF',
+    shadowColor: ColorPalettes.interactive.info,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   enhanceToggleText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 18,
     fontWeight: '700',
   },
@@ -522,79 +523,45 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   backButton: {
-    backgroundColor: 'rgba(55, 65, 81, 0.9)', // SWSAM gray
+    backgroundColor: ColorPalettes.transparent.black20, // Gray background
     paddingVertical: 15,
     paddingHorizontal: 25,
     borderRadius: 25,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: ColorPalettes.borders.light,
   },
   backButtonText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 16,
     fontWeight: '600',
   },
   retakeButton: {
-    backgroundColor: '#DC2626', // Professional red
+    backgroundColor: ColorPalettes.interactive.error, // Red background
     paddingVertical: 15,
     paddingHorizontal: 25,
     borderRadius: 25,
     alignItems: 'center',
-    shadowColor: '#DC2626',
+    shadowColor: ColorPalettes.interactive.error,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   retakeButtonText: {
-    color: '#194785', // Primary font color
+    color: ColorPalettes.text.light, // Light text color
     fontSize: 16,
     fontWeight: '700',
   },
   imageWrapper: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     position: 'relative',
   },
-  enhancementInfo: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    backgroundColor: 'rgba(10, 11, 13, 0.9)', // SWSAM dark background
-    padding: 15,
-    borderRadius: 15,
-    maxWidth: 250,
-    borderWidth: 1,
-    borderColor: '#1E40AF', // SWSAM blue border
-  },
-  enhancementText: {
-    color: '#194785', // Primary font color
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  enhancementDetail: {
-    color: '#194785', // Primary font color
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    backgroundColor: 'rgba(55, 65, 81, 0.9)', // SWSAM gray
-    padding: 12,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: '#374151',
-  },
-  closeButtonText: {
-    color: '#194785', // Primary font color
-    fontSize: 18,
-    fontWeight: '700',
+  zoomContainer: {
+    flex: 1,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contrastOverlay: {
     position: 'absolute',
@@ -602,7 +569,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'transparent',
+    pointerEvents: 'none',
   },
   invertOverlay: {
     position: 'absolute',
@@ -610,12 +577,46 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(10, 11, 13, 0.6)', // SWSAM dark overlay
+    backgroundColor: ColorPalettes.text.light,
+    mixBlendMode: 'difference',
+    pointerEvents: 'none',
   },
-  zoomContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  enhancementInfo: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: ColorPalettes.backgrounds.overlayAccent, // Dark background
+    padding: 15,
+    borderRadius: 12,
+    maxWidth: 200,
+  },
+  enhancementText: {
+    color: ColorPalettes.text.light, // Light text color
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  enhancementDetail: {
+    color: ColorPalettes.text.light, // Light text color
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    backgroundColor: ColorPalettes.transparent.black20, // Gray background
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    zIndex: 2,
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.light,
+  },
+  closeButtonText: {
+    color: ColorPalettes.text.light, // Light text color
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

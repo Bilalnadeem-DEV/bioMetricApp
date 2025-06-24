@@ -17,6 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setUserName, setUserRegistered } from '../store/slices/userSlice';
+import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type RegisterScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -31,69 +32,174 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { name: userName, isRegistered } = useAppSelector((state) => state.user);
   
-  const [name, setName] = useState(userName);
-  const [nameError, setNameError] = useState('');
+  const [cnic, setCnic] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [cnicError, setCnicError] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
+  const [dobError, setDobError] = useState('');
 
-  const validateName = (inputName: string): boolean => {
-    // Remove extra spaces and check if empty
-    const trimmedName = inputName.trim();
+  const validateCnic = (inputCnic: string): boolean => {
+    const trimmedCnic = inputCnic.trim();
     
-    if (!trimmedName) {
-      setNameError('Name is required');
+    if (!trimmedCnic) {
+      setCnicError('CNIC is required');
       return false;
     }
     
-    // Check minimum length
-    if (trimmedName.length < 2) {
-      setNameError('Name must be at least 2 characters long');
+    // Remove any non-numeric characters for validation
+    const numericCnic = trimmedCnic.replace(/\D/g, '');
+    
+    if (numericCnic.length !== 13) {
+      setCnicError('CNIC must be 13 digits');
       return false;
     }
     
-    // Check maximum length
-    if (trimmedName.length > 50) {
-      setNameError('Name must be less than 50 characters');
-      return false;
-    }
-    
-    // Check for valid characters (letters, spaces, hyphens, apostrophes)
-    const nameRegex = /^[a-zA-Z\s\-']+$/;
-    if (!nameRegex.test(trimmedName)) {
-      setNameError('Name can only contain letters, spaces, hyphens, and apostrophes');
-      return false;
-    }
-    
-    // Check for at least one letter (not just spaces/special chars)
-    const hasLetter = /[a-zA-Z]/.test(trimmedName);
-    if (!hasLetter) {
-      setNameError('Name must contain at least one letter');
-      return false;
-    }
-    
-    setNameError('');
+    setCnicError('');
     return true;
   };
 
-  const handleNameChange = (value: string) => {
-    setName(value);
-    // Clear error when user starts typing
-    if (nameError) {
-      setNameError('');
+  const validateFirstName = (inputName: string): boolean => {
+    const trimmedName = inputName.trim();
+    
+    if (!trimmedName) {
+      setFirstNameError('First name is required');
+      return false;
+    }
+    
+    if (trimmedName.length < 2) {
+      setFirstNameError('First name must be at least 2 characters long');
+      return false;
+    }
+    
+    const nameRegex = /^[a-zA-Z\s\-']+$/;
+    if (!nameRegex.test(trimmedName)) {
+      setFirstNameError('First name can only contain letters, spaces, hyphens, and apostrophes');
+      return false;
+    }
+    
+    setFirstNameError('');
+    return true;
+  };
+
+  const validateLastName = (inputName: string): boolean => {
+    const trimmedName = inputName.trim();
+    
+    if (!trimmedName) {
+      setLastNameError('Last name is required');
+      return false;
+    }
+    
+    if (trimmedName.length < 2) {
+      setLastNameError('Last name must be at least 2 characters long');
+      return false;
+    }
+    
+    const nameRegex = /^[a-zA-Z\s\-']+$/;
+    if (!nameRegex.test(trimmedName)) {
+      setLastNameError('Last name can only contain letters, spaces, hyphens, and apostrophes');
+      return false;
+    }
+    
+    setLastNameError('');
+    return true;
+  };
+
+  const validateDateOfBirth = (inputDate: string): boolean => {
+    const trimmedDate = inputDate.trim();
+    
+    if (!trimmedDate) {
+      setDobError('Date of birth is required');
+      return false;
+    }
+    
+    // Basic date format validation (DD/MM/YYYY)
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = trimmedDate.match(dateRegex);
+    
+    if (!match) {
+      setDobError('Date must be in DD/MM/YYYY format');
+      return false;
+    }
+    
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    
+    if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
+      setDobError('Please enter a valid date');
+      return false;
+    }
+    
+    setDobError('');
+    return true;
+  };
+
+  const handleCnicChange = (value: string) => {
+    // Format CNIC as user types (12345-1234567-1)
+    let formatted = value.replace(/\D/g, '');
+    if (formatted.length > 5) {
+      formatted = formatted.substring(0, 5) + '-' + formatted.substring(5);
+    }
+    if (formatted.length > 13) {
+      formatted = formatted.substring(0, 13) + '-' + formatted.substring(13, 14);
+    }
+    setCnic(formatted);
+    if (cnicError) {
+      setCnicError('');
+    }
+  };
+
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    if (firstNameError) {
+      setFirstNameError('');
+    }
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    if (lastNameError) {
+      setLastNameError('');
+    }
+  };
+
+  const handleDateOfBirthChange = (value: string) => {
+    // Format date as user types (DD/MM/YYYY)
+    let formatted = value.replace(/\D/g, '');
+    if (formatted.length > 2) {
+      formatted = formatted.substring(0, 2) + '/' + formatted.substring(2);
+    }
+    if (formatted.length > 5) {
+      formatted = formatted.substring(0, 5) + '/' + formatted.substring(5, 9);
+    }
+    setDateOfBirth(formatted);
+    if (dobError) {
+      setDobError('');
     }
   };
 
   const handleRegister = () => {
-    const trimmedName = name.trim();
+    const isCnicValid = validateCnic(cnic);
+    const isFirstNameValid = validateFirstName(firstName);
+    const isLastNameValid = validateLastName(lastName);
+    const isDobValid = validateDateOfBirth(dateOfBirth);
     
-    if (!validateName(trimmedName)) {
+    if (!isCnicValid || !isFirstNameValid || !isLastNameValid || !isDobValid) {
       return;
     }
 
+    // Combine first and last name for the full name
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
     // Save user data to Redux store
-    dispatch(setUserName(trimmedName));
+    dispatch(setUserName(fullName));
     dispatch(setUserRegistered(true));
 
-    // Navigate directly to scan preparation checklist
-    navigation.navigate('ScanPrep');
+    // Navigate to NewScreen instead of ScanPrep
+    navigation.navigate('NewScreen');
   };
 
   const handleBack = () => {
@@ -104,7 +210,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="#FBF5FE"
+        backgroundColor={ColorPalettes.backgrounds.primary}
       />
       <KeyboardAvoidingView 
         style={styles.keyboardAvoidingView}
@@ -122,35 +228,80 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                 <Text style={styles.backButtonText}>←</Text>
               </TouchableOpacity>
-              <View style={styles.headerContainer}>
-                <Image 
-                  source={require('../../assets/images/appIcon.png')} 
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-              </View>
+              <View style={styles.logoContainer}>
+            <Image 
+              source={require('../../assets/images/mainAppLogo.jpg')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
               <Text style={styles.title}>Register</Text>
               <Text style={styles.subtitle}>Create your biometric profile</Text>
             </View>
 
             <View style={styles.formContainer}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Full Name</Text>
+                <Text style={styles.label}>CNIC</Text>
                 <TextInput
-                  style={[styles.input, nameError ? styles.inputError : null]}
-                  placeholder="Enter your full name"
-                  placeholderTextColor="#9CA3AF"
-                  value={name}
-                  onChangeText={handleNameChange}
-                  onBlur={() => validateName(name)}
+                  style={[styles.input, cnicError ? styles.inputError : null]}
+                  placeholder="Enter your CNIC (e.g., 12345-1234567-1)"
+                  placeholderTextColor={ColorPalettes.text.muted}
+                  value={cnic}
+                  onChangeText={handleCnicChange}
+                  onBlur={() => validateCnic(cnic)}
+                  keyboardType="numeric"
+                  maxLength={15}
+                />
+                {cnicError ? <Text style={styles.errorText}>{cnicError}</Text> : null}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>First Name</Text>
+                <TextInput
+                  style={[styles.input, firstNameError ? styles.inputError : null]}
+                  placeholder="Enter your first name"
+                  placeholderTextColor={ColorPalettes.text.muted}
+                  value={firstName}
+                  onChangeText={handleFirstNameChange}
+                  onBlur={() => validateFirstName(firstName)}
                   autoCapitalize="words"
                   autoCorrect={false}
                 />
-                {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
+                {firstNameError ? <Text style={styles.errorText}>{firstNameError}</Text> : null}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Last Name</Text>
+                <TextInput
+                  style={[styles.input, lastNameError ? styles.inputError : null]}
+                  placeholder="Enter your last name"
+                  placeholderTextColor={ColorPalettes.text.muted}
+                  value={lastName}
+                  onChangeText={handleLastNameChange}
+                  onBlur={() => validateLastName(lastName)}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
+                {lastNameError ? <Text style={styles.errorText}>{lastNameError}</Text> : null}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Date of Birth</Text>
+                <TextInput
+                  style={[styles.input, dobError ? styles.inputError : null]}
+                  placeholder="DD/MM/YYYY"
+                  placeholderTextColor={ColorPalettes.text.muted}
+                  value={dateOfBirth}
+                  onChangeText={handleDateOfBirthChange}
+                  onBlur={() => validateDateOfBirth(dateOfBirth)}
+                  keyboardType="numeric"
+                  maxLength={10}
+                />
+                {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
               </View>
 
               {/* Biometric Scan Instructions */}
-              <View style={styles.instructionsContainer}>
+              {/* <View style={styles.instructionsContainer}>
                 <Text style={styles.instructionsTitle}>Biometric Scan Instructions</Text>
                 
                 <View style={styles.instructionItem}>
@@ -188,20 +339,24 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     </Text>
                   </View>
                 </View>               
-              </View>
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={[styles.registerButton, !name.trim() && styles.registerButtonDisabled]} 
-                onPress={handleRegister}
-                disabled={!name.trim()}
-              >
-                <Text style={styles.buttonText}>Continue to Biometric Scan</Text>
-              </TouchableOpacity>
+              </View> */}
             </View>
           </View>
         </ScrollView>
+        
+        {/* Sticky Button Container */}
+        {/* <View style={styles.stickyButtonContainer}> */}
+          <TouchableOpacity 
+            style={[
+              styles.registerButton, 
+              (!cnic.trim() || !firstName.trim() || !lastName.trim() || !dateOfBirth.trim()) && styles.registerButtonDisabled
+            ]} 
+            onPress={handleRegister}
+            disabled={!cnic.trim() || !firstName.trim() || !lastName.trim() || !dateOfBirth.trim()}
+          >
+            <Text style={styles.buttonText}>Continue to Biometric Scan</Text>
+          </TouchableOpacity>
+        {/* </View> */}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -210,7 +365,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF5FE',
+    backgroundColor: ColorPalettes.backgrounds.primary,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -220,11 +375,14 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
+    paddingBottom: 100,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingBottom: 16,
+    paddingTop: 24,
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
@@ -242,7 +400,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
   },
@@ -250,12 +408,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#2D1A58',
+    backgroundColor: ColorPalettes.brand.secondary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     marginTop: 20,
-    shadowColor: '#823280',
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 6,
@@ -264,24 +422,31 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
     borderWidth: 2,
-    borderColor: '#9CA3AF',
+    borderColor: ColorPalettes.borders.light,
+  },
+  logoContainer: {
+    width: 150,
+    height: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   logo: {
-    width: 60,
-    height: 60,
+    width: 170,
+    height: 170,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     textAlign: 'center',
     fontWeight: '300',
+    lineHeight: 24,
   },
   formContainer: {
     flex: 1,
@@ -293,19 +458,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#ffffff',
+    backgroundColor: ColorPalettes.backgrounds.surface,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
+    borderColor: ColorPalettes.borders.light,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#020817',
-    shadowColor: '#823280',
+    color: ColorPalettes.text.primary,
+    shadowColor: ColorPalettes.shadows.light,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -314,24 +479,28 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  inputFocused: {
+    borderColor: ColorPalettes.brand.primary,
+    shadowColor: ColorPalettes.shadows.primary,
+    shadowOpacity: 0.2,
+  },
   inputError: {
-    borderColor: '#ef4444',
-    borderWidth: 2,
+    borderColor: ColorPalettes.interactive.error,
   },
   errorText: {
-    color: '#ef4444',
+    color: ColorPalettes.interactive.error,
     fontSize: 14,
-    marginTop: 6,
-    marginLeft: 4,
+    marginTop: 5,
+    fontWeight: '500',
   },
   instructionsContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: ColorPalettes.backgrounds.surface,
     borderRadius: 16,
     padding: 20,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
-    shadowColor: '#823280',
+    borderColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -343,7 +512,7 @@ const styles = StyleSheet.create({
   instructionsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -356,14 +525,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
     marginTop: 2,
   },
   stepNumberText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -373,41 +542,50 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     marginBottom: 4,
   },
   stepDescription: {
     fontSize: 14,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     lineHeight: 20,
   },
-  buttonContainer: {
+  stickyButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: ColorPalettes.backgrounds.primary,
     paddingTop: 20,
-  },
-  registerButton: {
-    backgroundColor: '#823280',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#823280',
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: -2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  registerButton: {        
+    backgroundColor: '#1E2772',
+    borderColor: '#1E2772',
+    paddingVertical: 18,    
+    marginHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',    
     borderWidth: 1,
-    borderColor: '#9CA3AF',
   },
   registerButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: ColorPalettes.text.disabled,
     shadowOpacity: 0.1,
   },
   buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
+    color: ColorPalettes.text.light,
+    fontSize: 18,
     fontWeight: '600',
   },
 });

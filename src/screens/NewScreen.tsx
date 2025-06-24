@@ -24,6 +24,7 @@ import {
 } from '../store/slices/biometricSlice';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import RNFS from 'react-native-fs';
+import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type NewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'NewScreen'>;
 
@@ -45,7 +46,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   } = useAppSelector((state) => state.biometric);
 
   // Local state for SDK management
-  const [captureStatus, setCaptureStatus] = useState<string>('Initializing SDK...');
+  const [captureStatus, setCaptureStatus] = useState<string>('Bio metric service is live');
   const [fingerRects, setFingerRects] = useState<any[]>([]);
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [sdkError, setSdkError] = useState<string | null>(null);
@@ -57,13 +58,13 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         const sdk = await import('@biopassid/fingerprint-sdk-react-native');
         setFingerprintSDK(sdk);
         setSdkLoaded(true);
-        setCaptureStatus('SDK loaded successfully - Ready to capture');
+        setCaptureStatus('Bio metric service is live');
         dispatch(clearError());
       } catch (error) {
-        console.error('Failed to load BioPassID SDK:', error);
-        setSdkError('BioPassID SDK not available. Please rebuild the app after running pod install.');
-        setCaptureStatus('SDK not available');
-        dispatch(setError('BioPassID SDK not available'));
+        console.error('Failed to load fingerprint service:', error);
+        setSdkError('Fingerprint service not available. Please restart the app.');
+        setCaptureStatus('Service temporarily unavailable');
+        dispatch(setError('Fingerprint service not available'));
       }
     };
 
@@ -75,8 +76,8 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     numberFingersToCapture: 4,
     captureType: 'LEFT_HAND_FINGERS',
     outputType: 'CAPTURE_AND_SEGMENTATION',
-    timeToCapture: 3,
-    overlayColor: '#80000000',
+    timeToCapture: 1,
+    overlayColor: ColorPalettes.transparent.black30,
     imageQuality: {
       compressionQuality: 100,
       imageFormat: 'JPEG',
@@ -99,26 +100,26 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     },
     captureCountdown: {
       enabled: true,
-      backgroundColor: '#50888888',
-      progressColor: '#D6A262',
-      textColor: '#FFFFFF',
+      backgroundColor: ColorPalettes.transparent.black20,
+      progressColor: ColorPalettes.semantic.fingerprint,
+      textColor: ColorPalettes.text.light,
       countdownDuration: 2,
     },
     backButton: {
       enabled: true,
-      backgroundColor: '#00000000',
+      backgroundColor: ColorPalettes.transparent.clear,
       buttonPadding: 0,
       buttonSize: { width: 56, height: 56 },
       iconOptions: {
         enabled: true,
         iconFile: 'fingerprintsdk_ic_close',
-        iconColor: '#FFFFFF',
+        iconColor: ColorPalettes.text.light,
         iconSize: { width: 32, height: 32 },
       },
       labelOptions: {
         enabled: false,
         content: 'Back',
-        textColor: '#FFFFFF',
+        textColor: ColorPalettes.text.light,
         textSize: 14,
       },
     },
@@ -129,36 +130,36 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         rightHandMessage: 'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
         thumbsMessage: 'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
       },
-      textColor: '#FFFFFF',
+      textColor: ColorPalettes.text.light,
       textSize: 16,
     },
     fingerEllipse: {
       enabled: true,
-      ellipseColor: '#80D6A262',
+      ellipseColor: ColorPalettes.semantic.fingerprint + '80',
       thickness: 3,
     },
     distanceIndicator: {
       enabled: true,
-      selectedBarColor: '#D6A262',
-      unselectedBarColor: '#FFFFFF',
-      arrowColor: '#D6A262',
+      selectedBarColor: ColorPalettes.semantic.fingerprint,
+      unselectedBarColor: ColorPalettes.text.light,
+      arrowColor: ColorPalettes.semantic.fingerprint,
       sensitivity: 'high',
       tooCloseText: {
         enabled: true,
         content: 'Too close - move hand away for better focus',
-        textColor: '#FF6B6B',
+        textColor: ColorPalettes.interactive.error,
         textSize: 16,
       },
       tooFarText: {
         enabled: true,
         content: 'Too far - bring hand closer for sharp capture',
-        textColor: '#FF6B6B',
+        textColor: ColorPalettes.interactive.error,
         textSize: 16,
       },
       perfectDistanceText: {
         enabled: true,
         content: 'Perfect distance - hold steady!',
-        textColor: '#4ECDC4',
+        textColor: ColorPalettes.interactive.success,
         textSize: 16,
       },
     },
@@ -184,8 +185,8 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const handleCaptureFingerprints = async () => {
     if (!sdkLoaded || !fingerprintSDK) {
       Alert.alert(
-        'SDK Not Available',
-        'The BioPassID SDK is not properly loaded. Please:\n\n1. Ensure you have run "pod install" in the ios folder\n2. Rebuild the app completely\n3. Make sure you\'re not using Expo Go',
+        'Service Unavailable',
+        'The fingerprint service is not available right now. Please:\n\n1. Close the app completely\n2. Restart the app\n3. Try again',
         [{ text: 'OK' }]
       );
       return;
@@ -194,7 +195,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     try {
       // Start scan session in Redux
       dispatch(startScanSession({ userName: userName || 'Unknown User' }));
-      setCaptureStatus('Initializing fingerprint capture...');
+      setCaptureStatus('Preparing fingerprint capture...');
       
       const { useFingerprint } = fingerprintSDK;
       const { takeFingerprint } = useFingerprint();
@@ -312,14 +313,14 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
   const handleClearImages = () => {
     dispatch(clearBiometricData());
-    setCaptureStatus(sdkLoaded ? 'SDK loaded successfully - Ready to capture' : 'SDK not available');
+    setCaptureStatus(sdkLoaded ? 'Bio metric service is live' : 'Service temporarily unavailable');
     setFingerRects([]);
   };
 
   const handleRebuildInstructions = () => {
     Alert.alert(
       'Rebuild Instructions',
-      'To properly use the BioPassID SDK:\n\n1. Close the app completely\n2. Run "cd ios && pod install" in terminal\n3. Rebuild the app completely\n4. Don\'t use Expo Go\n\nThe SDK requires native linking to work properly.',
+      'To properly use the fingerprint service:\n\n1. Close the app completely\n2. Restart the app\n3. Try again',
       [{ text: 'Got it!' }]
     );
   };
@@ -423,7 +424,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         try {
           result = await CameraRoll.save(filePathToSave, {
             type: 'photo',
-            album: 'BioSecure Fingerprints',
+            album: 'hyperI Fingerprints',
           });
         } catch (albumError) {
           console.log('Album creation failed, trying without album:', albumError);
@@ -479,8 +480,8 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
               Alert.alert(
                 'Settings Guide',
                 Platform.OS === 'ios' 
-                  ? 'Go to Settings > Privacy & Security > Photos > BioSecure and enable "Add Photos Only" or "Full Access".'
-                  : 'Go to Settings > Apps > BioSecure > Permissions > Storage and enable it.',
+                  ? 'Go to Settings > Privacy & Security > Photos > hyperI and enable "Add Photos Only" or "Full Access".'
+                  : 'Go to Settings > Apps > hyperI > Permissions > Storage and enable it.',
                 [{ text: 'Got it' }]
               );
             },
@@ -530,7 +531,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                 } else {
                   await CameraRoll.save(preparedUri, {
                     type: 'photo',
-                    album: 'BioSecure Fingerprints',
+                    album: 'hyperI Fingerprints',
                   });
                 }
                 
@@ -574,26 +575,26 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="#FBF5FE"
+        backgroundColor={ColorPalettes.backgrounds.primary}
       />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <View style={styles.headerContainer}>
+         
+          <View style={styles.logoContainer}>
             <Image 
-              source={require('../../assets/images/appIcon.png')} 
+              source={require('../../assets/images/mainAppLogo.jpg')} 
               style={styles.logo}
               resizeMode="contain"
             />
-          </View>
-          <Text style={styles.title}>BioPassID Fingerprint</Text>
-          <Text style={styles.subtitle}>Professional fingerprint capture with BioPassID SDK</Text>
+          </View>          
+          <Text style={styles.subtitle}>Secure biometric authentication</Text>
         </View>
 
         <View style={styles.statusContainer}>
-          <Text style={styles.statusLabel}>Status:</Text>
+          <Text style={styles.statusLabel}>Service Status:</Text>
           <Text style={[
             styles.statusText, 
             isScanning && styles.statusActive,
@@ -611,20 +612,19 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
         {sdkError && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>SDK Not Available</Text>
+            <Text style={styles.errorTitle}>Service Unavailable</Text>
             <Text style={styles.errorText}>
-              The BioPassID SDK requires native linking. Please follow these steps:
+              The fingerprint service is temporarily unavailable. Please follow these steps:
             </Text>
             <Text style={styles.errorStep}>1. Close the app completely</Text>
-            <Text style={styles.errorStep}>2. Run: cd ios && pod install</Text>
-            <Text style={styles.errorStep}>3. Rebuild the app completely</Text>
-            <Text style={styles.errorStep}>4. Don't use Expo Go</Text>
+            <Text style={styles.errorStep}>2. Restart the app</Text>
+            <Text style={styles.errorStep}>3. Try again</Text>
             
             <TouchableOpacity 
               style={styles.helpButton} 
               onPress={handleRebuildInstructions}
             >
-              <Text style={styles.helpButtonText}>Show Detailed Instructions</Text>
+              <Text style={styles.helpButtonText}>Get Help</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -633,38 +633,36 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           <TouchableOpacity 
             style={[
               styles.captureButton, 
-              (isScanning || !sdkLoaded) && styles.captureButtonDisabled
+              (!sdkLoaded) && styles.captureButtonDisabled
             ]} 
             onPress={handleCaptureFingerprints}
-            disabled={isScanning || !sdkLoaded}
+            disabled={!sdkLoaded}
           >
             <Text style={styles.captureButtonText}>
               {!sdkLoaded 
-                ? 'SDK Not Available' 
-                : isScanning 
-                  ? 'Capturing...' 
-                  : 'Capture Left Hand Fingerprints'
+                ? 'Service Unavailable'               
+                  : 'Start Fingerprint Scan'
               }
             </Text>
           </TouchableOpacity>
 
           {capturedImages.length > 0 && (
             <>
-              <TouchableOpacity 
+              {/* <TouchableOpacity 
                 style={styles.saveAllButton} 
                 onPress={saveAllImagesToGallery}
               >
                 <Text style={styles.saveAllButtonText}>
-                  💾 Save All Images to Gallery ({capturedImages.length})
+                  💾 Save All to Gallery ({capturedImages.length})
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <TouchableOpacity 
                 style={styles.clearButton} 
                 onPress={handleClearImages}
               >
                 <Text style={styles.clearButtonText}>
-                  Clear Captured Images ({capturedImages.length})
+                  Clear All Images ({capturedImages.length})
                 </Text>
               </TouchableOpacity>
             </>
@@ -673,7 +671,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
         {capturedImages.length > 0 && (
           <View style={styles.resultsContainer}>
-            <Text style={styles.resultsTitle}>Captured Fingerprints (Redux Store):</Text>
+            <Text style={styles.resultsTitle}>Captured Fingerprints:</Text>
             <Text style={styles.reduxInfo}>
               Session: {currentSession?.status || 'No active session'} | 
               Total Scans: {totalScansCompleted} | 
@@ -723,42 +721,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
               ))}
             </View>
           </View>
-        )}
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoTitle}>Image Quality Enhancement:</Text>
-          <Text style={styles.qualityTip}>📸 Hold hand completely still for 2-3 seconds</Text>
-          <Text style={styles.qualityTip}>💡 Ensure good lighting conditions</Text>
-          <Text style={styles.qualityTip}>📏 Maintain proper distance (follow on-screen guidance)</Text>
-          <Text style={styles.qualityTip}>🤚 Place all 4 fingers flat and spread slightly</Text>
-          <Text style={styles.qualityTip}>⏱️ Wait for "Perfect position" message before capture</Text>
-          <Text style={styles.qualityTip}>🔄 Recapture if quality score is below 75</Text>
-          
-          <Text style={styles.infoTitle}>BioPassID SDK + Redux Integration:</Text>
-          <Text style={styles.infoText}>• Professional fingerprint capture</Text>
-          <Text style={styles.infoText}>• Real-time finger detection</Text>
-          <Text style={styles.infoText}>• Distance guidance</Text>
-          <Text style={styles.infoText}>• Multiple finger capture</Text>
-          <Text style={styles.infoText}>• High-quality image processing</Text>
-          <Text style={styles.infoText}>• FIDO2 compliant</Text>
-          <Text style={styles.infoText}>• ✅ Redux state management</Text>
-          <Text style={styles.infoText}>• ✅ Session tracking</Text>
-          <Text style={styles.infoText}>• ✅ Persistent storage</Text>
-          <Text style={styles.infoText}>• ✅ Quality validation & scoring</Text>
-          <Text style={styles.infoText}>• ✅ Save to photo gallery</Text>
-          
-          <Text style={styles.infoTitle}>License Key:</Text>
-          <Text style={styles.licenseText}>9KM2-DLW6-E8VY-ADFI</Text>
-          
-          <Text style={styles.infoTitle}>Redux State:</Text>
-          <Text style={styles.reduxStateText}>User: {userName || 'Not set'}</Text>
-          <Text style={styles.reduxStateText}>Active Session: {currentSession ? 'Yes' : 'No'}</Text>
-          <Text style={styles.reduxStateText}>Total Scans: {totalScansCompleted}</Text>
-          <Text style={styles.reduxStateText}>Stored Images: {capturedImages.length}</Text>
-          {biometricError && (
-            <Text style={styles.reduxErrorText}>Error: {biometricError}</Text>
-          )}
-        </View>
+        )}      
       </ScrollView>
     </SafeAreaView>
   );
@@ -767,7 +730,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF5FE',
+    backgroundColor: ColorPalettes.backgrounds.primary,
   },
   scrollView: {
     flex: 1,
@@ -779,6 +742,16 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 30,
+  },
+  logoContainer: {
+    width: 150,
+    height: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 170,
+    height: 170,
   },
   backButton: {
     position: 'absolute',
@@ -792,7 +765,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
   },
@@ -800,12 +773,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#2D1A58',
+    backgroundColor: ColorPalettes.brand.secondary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     marginTop: 20,
-    shadowColor: '#823280',
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 6,
@@ -814,33 +787,29 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
     borderWidth: 2,
-    borderColor: '#9CA3AF',
-  },
-  logo: {
-    width: 60,
-    height: 60,
+    borderColor: ColorPalettes.borders.light,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     textAlign: 'center',
     fontWeight: '300',
   },
   statusContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: ColorPalettes.backgrounds.surface,
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
-    shadowColor: '#823280',
+    borderColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -852,57 +821,57 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginBottom: 8,
   },
   statusText: {
     fontSize: 16,
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     fontWeight: '500',
   },
   statusActive: {
-    color: '#D6A262',
+    color: ColorPalettes.semantic.fingerprint,
   },
   statusError: {
-    color: '#ef4444',
+    color: ColorPalettes.interactive.error,
   },
   statusSuccess: {
-    color: '#10b981',
+    color: ColorPalettes.interactive.success,
   },
   fingerCount: {
     fontSize: 14,
-    color: '#10b981',
+    color: ColorPalettes.interactive.success,
     fontWeight: '500',
     marginTop: 4,
   },
   errorContainer: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: ColorPalettes.interactive.error + '0D',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: ColorPalettes.interactive.error + '40',
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#dc2626',
+    color: ColorPalettes.interactive.error,
     marginBottom: 10,
   },
   errorText: {
     fontSize: 14,
-    color: '#7f1d1d',
+    color: ColorPalettes.interactive.error + 'CC',
     marginBottom: 15,
     lineHeight: 20,
   },
   errorStep: {
     fontSize: 14,
-    color: '#7f1d1d',
+    color: ColorPalettes.interactive.error + 'CC',
     marginBottom: 5,
     paddingLeft: 10,
   },
   helpButton: {
-    backgroundColor: '#dc2626',
+    backgroundColor: ColorPalettes.interactive.error,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -910,7 +879,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   helpButtonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -918,40 +887,32 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   captureButton: {
-    backgroundColor: '#823280',
+    backgroundColor: '#1E2772',
     paddingVertical: 18,
     paddingHorizontal: 40,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 15,
-    shadowColor: '#823280',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    marginBottom: 15, 
     borderWidth: 1,
-    borderColor: '#9CA3AF',
+    borderColor: '#1E2772',
   },
   captureButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: ColorPalettes.text.disabled,
     shadowOpacity: 0.1,
   },
   captureButtonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 18,
     fontWeight: '600',
   },
   saveAllButton: {
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.interactive.primary,
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 15,
-    shadowColor: '#823280',
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 6,
@@ -960,35 +921,35 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
+    borderColor: ColorPalettes.borders.light,
   },
   saveAllButtonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 18,
     fontWeight: '600',
   },
   clearButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: 'transparent',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#dc2626',
+    borderColor: '#CF2234',
   },
   clearButtonText: {
-    color: '#ffffff',
+    color: '#CF2234',
     fontSize: 16,
     fontWeight: '600',
   },
   resultsContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: ColorPalettes.backgrounds.surface,
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
-    shadowColor: '#823280',
+    borderColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1000,7 +961,7 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     marginBottom: 15,
   },
   imageGrid: {
@@ -1017,65 +978,65 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: ColorPalettes.backgrounds.secondary,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: ColorPalettes.borders.light,
   },
   imageLabel: {
     fontSize: 12,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginTop: 5,
     fontWeight: '500',
   },
   imageTimestamp: {
     fontSize: 12,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginTop: 2,
     fontWeight: '300',
   },
   imageQuality: {
     fontSize: 12,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginTop: 2,
     fontWeight: '300',
   },
   qualityHigh: {
-    color: '#10b981',
+    color: ColorPalettes.quality.high,
     fontWeight: '500',
   },
   qualityMedium: {
-    color: '#D6A262',
+    color: ColorPalettes.quality.medium,
     fontWeight: '500',
   },
   qualityLow: {
-    color: '#ef4444',
+    color: ColorPalettes.quality.low,
     fontWeight: '500',
   },
   qualityScore: {
     fontSize: 12,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginTop: 2,
     fontWeight: '300',
   },
   fileSize: {
     fontSize: 12,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginTop: 2,
     fontWeight: '300',
   },
   reduxInfo: {
     fontSize: 14,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginBottom: 15,
     fontStyle: 'italic',
   },
   infoContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: ColorPalettes.backgrounds.surface,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
-    shadowColor: '#823280',
+    borderColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1087,39 +1048,39 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     marginBottom: 15,
   },
   infoText: {
     fontSize: 14,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginBottom: 8,
     lineHeight: 20,
   },
   licenseText: {
     fontSize: 14,
-    color: '#D6A262',
+    color: ColorPalettes.semantic.fingerprint,
     fontWeight: '600',
     fontFamily: 'monospace',
   },
   reduxStateText: {
     fontSize: 14,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginBottom: 5,
   },
   reduxErrorText: {
     fontSize: 14,
-    color: '#ef4444',
+    color: ColorPalettes.interactive.error,
     marginBottom: 15,
   },
   qualityTip: {
     fontSize: 14,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     marginBottom: 8,
     lineHeight: 20,
   },
   saveImageButton: {
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.interactive.primary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -1127,7 +1088,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   saveImageButtonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 14,
     fontWeight: '600',
   },

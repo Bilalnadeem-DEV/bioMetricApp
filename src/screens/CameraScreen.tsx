@@ -23,6 +23,7 @@ import {
   clearError,
   addCapturedImage 
 } from '../store/slices/biometricSlice';
+import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 type CameraScreenRouteProp = RouteProp<RootStackParamList, 'Camera'>;
@@ -168,7 +169,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         try {
           await CameraRoll.saveAsset(imageUri, {
             type: 'photo',
-            album: 'BioSecure Scans'
+            album: 'hyperI Scans'
           });
           dispatch(setStoragePermission('granted'));
         } catch (saveError) {
@@ -227,7 +228,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   if (!hasPermission || !device) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FBF5FE" />
+        <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
         <Text style={styles.errorText}>
           {!hasPermission ? 'Camera permission required for biometric scanning' : 'No camera device found'}
         </Text>
@@ -240,7 +241,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
 
   return (
     <View style={styles.cameraContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="light-content" backgroundColor={ColorPalettes.backgrounds.overlayDark} />
       <Camera
         ref={camera}
         style={styles.camera}
@@ -322,13 +323,13 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: ColorPalettes.backgrounds.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
   cameraContainer: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: ColorPalettes.backgrounds.overlayDark,
   },
   camera: {
     flex: 1,
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: ColorPalettes.transparent.black30,
   },
   topSection: {
     flexDirection: 'row',
@@ -353,22 +354,22 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: 'rgba(26, 26, 26, 0.8)',
+    backgroundColor: ColorPalettes.transparent.black20,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: ColorPalettes.borders.light,
   },
   closeButtonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 18,
     fontWeight: 'bold',
   },
   imageCounter: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
-    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+    color: ColorPalettes.text.light,
+    backgroundColor: ColorPalettes.semantic.camera + '80',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -379,10 +380,10 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     fontSize: 16,
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     textAlign: 'center',
     fontWeight: '500',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: ColorPalettes.transparent.black20,
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginHorizontal: 20,
@@ -403,9 +404,9 @@ const styles = StyleSheet.create({
     width: 320,
     height: 550,
     borderWidth: 3,
-    borderColor: '#3b82f6',
+    borderColor: ColorPalettes.semantic.camera,
     borderRadius: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: ColorPalettes.semantic.camera + '1A',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -419,9 +420,9 @@ const styles = StyleSheet.create({
     width: 190,
     height: 90,
     borderWidth: 2,
-    borderColor: '#9ca3af',
+    borderColor: ColorPalettes.borders.light,
     borderRadius: 45,
-    backgroundColor: 'rgba(156, 163, 175, 0.1)',
+    backgroundColor: ColorPalettes.borders.light + '1A',
     marginVertical: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -431,15 +432,15 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#6b7280',
-    backgroundColor: 'rgba(107, 114, 128, 0.2)',
+    borderColor: ColorPalettes.text.disabled,
+    backgroundColor: ColorPalettes.text.disabled + '33',
   },
   fingerprintText: {
     position: 'absolute',
     bottom: 15,
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#3b82f6',
+    color: ColorPalettes.semantic.camera,
     letterSpacing: 1,
   },
   bottomSection: {
@@ -454,10 +455,10 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#3b82f6',
+    backgroundColor: ColorPalettes.semantic.camera,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#3b82f6',
+    shadowColor: ColorPalettes.semantic.camera,
     shadowOffset: {
       width: 0,
       height: 6,
@@ -466,35 +467,35 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 4,
-    borderColor: '#ffffff',
+    borderColor: ColorPalettes.text.light,
   },
   captureButtonDisabled: {
-    backgroundColor: '#6b7280',
+    backgroundColor: ColorPalettes.text.disabled,
     shadowOpacity: 0.2,
   },
   captureButtonInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#ffffff',
+    backgroundColor: ColorPalettes.text.light,
   },
   errorText: {
     fontSize: 16,
-    color: '#ef4444',
+    color: ColorPalettes.interactive.error,
     textAlign: 'center',
     marginBottom: 20,
     paddingHorizontal: 20,
   },
   backButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: ColorPalettes.semantic.camera,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4b5563',
+    borderColor: ColorPalettes.borders.light,
   },
   backButtonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -23,6 +23,7 @@ import {
   setCurrentImageIndex,
   clearError 
 } from '../store/slices/biometricSlice';
+import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type ScanPrepScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -189,7 +190,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
       // Save the resized image to gallery
       await CameraRoll.saveAsset(resizedImage.uri, {
         type: 'photo',
-        album: 'BioSecure Scans'
+        album: 'hyperI Scans'
       });
       
       Alert.alert(
@@ -253,7 +254,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="#FBF5FE"
+        backgroundColor={ColorPalettes.backgrounds.primary}
       />
       <ScrollView 
         style={styles.scrollView}
@@ -320,7 +321,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF5FE',
+    backgroundColor: ColorPalettes.backgrounds.primary,
   },
   scrollView: {
     flex: 1,
@@ -349,7 +350,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
   },
@@ -357,12 +358,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#2D1A58',
+    backgroundColor: ColorPalettes.brand.secondary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     marginTop: 20,
-    shadowColor: '#823280',
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 6,
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
     borderWidth: 2,
-    borderColor: '#9CA3AF',
+    borderColor: ColorPalettes.borders.light,
   },
   logo: {
     width: 60,
@@ -380,13 +381,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     textAlign: 'center',
     fontWeight: '300',
   },
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -412,13 +413,13 @@ const styles = StyleSheet.create({
     width: 90,
     height: 120,
     borderRadius: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: ColorPalettes.backgrounds.surface,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
     borderWidth: 2,
-    borderColor: '#9CA3AF',
-    shadowColor: '#823280',
+    borderColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -437,12 +438,12 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: ColorPalettes.backgrounds.secondary,
     borderRadius: 10,
   },
   plusIcon: {
     fontSize: 24,
-    color: '#823280',
+    color: ColorPalettes.brand.primary,
     fontWeight: 'bold',
   },
   thumbnailNumber: {
@@ -450,7 +451,7 @@ const styles = StyleSheet.create({
     bottom: -25,
     fontSize: 14,
     fontWeight: '600',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
   },
   downloadButton: {
     position: 'absolute',
@@ -459,10 +460,10 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#823280',
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -472,19 +473,17 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   downloadIcon: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 12,
     fontWeight: 'bold',
   },
   progressSection: {
     marginBottom: 40,
-    // backgroundColor: '#ffffff',
     padding: 20,
     marginTop: 20,
     borderRadius: 16,
-    // borderWidth: 1,
-    borderColor: '#9CA3AF',
-    shadowColor: '#823280',
+    borderColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -496,27 +495,27 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     marginBottom: 15,
     textAlign: 'center',
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: ColorPalettes.backgrounds.secondary,
     borderRadius: 4,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
+    borderColor: ColorPalettes.borders.light,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.brand.primary,
     borderRadius: 4,
     minWidth: 2,
   },
   progressText: {
     fontSize: 14,
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -527,13 +526,13 @@ const styles = StyleSheet.create({
     right: 20,    
   },
   captureButton: {
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.interactive.primary,
     paddingVertical: 18,
     paddingHorizontal: 40,
     borderRadius: 12,
     alignItems: 'center',
     minWidth: 250,
-    shadowColor: '#823280',
+    shadowColor: ColorPalettes.shadows.primary,
     shadowOffset: {
       width: 0,
       height: 6,
@@ -542,13 +541,13 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
+    borderColor: ColorPalettes.borders.light,
   },
   completedButton: {
-    backgroundColor: '#2D1A58',
+    backgroundColor: ColorPalettes.interactive.secondary,
   },
   buttonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -1,71 +1,63 @@
-// Custom Color Palette for BioSecure App
+// Custom Color Palette for hyperI App
 // Based on user-provided color scheme
+import { ColorPalettes } from './helpers/colorPalettes';
 
 export const Colors = {
   // Primary Backgrounds
-  primary: '#FBF5FE',        // Main background - light purple
-  secondary: '#2D1A58',      // Secondary background - dark purple
-  surface: '#1a1a2e',        // Surface backgrounds for cards/containers
-  light: '#FBF4FD',          // Light background variant
-  lightSecondary: '#F9FAFB', // Light secondary background
+  primary: ColorPalettes.backgrounds.primary,        // Main background - white
+  secondary: ColorPalettes.brand.secondary,          // Secondary background - dark purple
+  surface: ColorPalettes.backgrounds.surface,        // Surface backgrounds for cards/containers
+  light: ColorPalettes.brand.light,                  // Light background variant - white
+  lightSecondary: ColorPalettes.backgrounds.secondary, // Light secondary background - white
   
   // Accent Colors
-  accent: '#823280',         // Primary purple accent
-  accentDark: '#2D1A58',     // Darker purple variant
-  accentLight: '#9CA3AF',    // Light gray accent
+  accent: ColorPalettes.brand.primary,               // Primary purple accent
+  accentDark: ColorPalettes.brand.secondary,         // Darker purple variant
+  accentLight: ColorPalettes.brand.accent,           // Light gray accent
   
   // Text Colors
-  textPrimary: '#020817',    // Primary text - very dark blue
-  textSecondary: '#4F5866',  // Secondary text - dark gray
-  textMuted: '#9CA3AF',      // Muted text - gray
-  textDisabled: '#6b7280',   // Disabled text - darker gray
-  textDark: '#020817',       // Dark text for light backgrounds
-  textLight: '#ffffff',      // White text for dark backgrounds
+  textPrimary: ColorPalettes.text.primary,           // Primary text - very dark blue
+  textSecondary: ColorPalettes.text.secondary,       // Secondary text - dark gray
+  textMuted: ColorPalettes.text.muted,               // Muted text - gray
+  textDisabled: ColorPalettes.text.disabled,         // Disabled text - darker gray
+  textDark: ColorPalettes.text.dark,                 // Dark text for light backgrounds
+  textLight: ColorPalettes.text.light,               // White text for dark backgrounds
   
   // Border Colors
-  border: '#9CA3AF',         // Primary border color
-  borderLight: '#823280',    // Purple border variant
-  borderDark: '#2D1A58',     // Dark purple border
+  border: ColorPalettes.borders.light,               // Primary border color
+  borderLight: ColorPalettes.borders.medium,         // Purple border variant
+  borderDark: ColorPalettes.borders.dark,            // Dark purple border
   
   // Status Colors
-  success: '#10b981',        // Success green
-  error: '#ef4444',          // Error red
-  warning: '#f59e0b',        // Warning amber
+  success: ColorPalettes.interactive.success,        // Success green
+  error: ColorPalettes.interactive.error,            // Error red
+  warning: ColorPalettes.interactive.warning,        // Warning amber
+  info: ColorPalettes.interactive.info,              // Info blue
   
   // Shadow Colors
-  shadow: '#823280',         // Purple shadow for accent elements
-  shadowDark: '#000000',     // Black shadow for general use
+  shadow: ColorPalettes.shadows.primary,             // Purple shadow for accent elements
+  shadowDark: ColorPalettes.shadows.secondary,       // Black shadow for general use
   
   // Overlay Colors
-  overlay: 'rgba(251, 245, 254, 0.3)',      // General overlay
-  overlayDark: 'rgba(45, 26, 88, 0.6)',     // Darker overlay
-  overlayAccent: 'rgba(130, 50, 128, 0.8)', // Purple accent overlay
-  overlayAccentLight: 'rgba(130, 50, 128, 0.1)', // Light purple overlay
-  overlayCard: 'rgba(45, 26, 88, 0.8)', // Card overlay
+  overlay: ColorPalettes.backgrounds.overlay,                    // General overlay
+  overlayDark: ColorPalettes.backgrounds.overlayDark,           // Darker overlay
+  overlayAccent: ColorPalettes.backgrounds.overlayAccent,       // Purple accent overlay
+  overlayAccentLight: ColorPalettes.shadows.light,             // Light purple overlay
+  overlayCard: ColorPalettes.backgrounds.overlayDark,          // Card overlay
   
   // Placeholder Colors
-  placeholder: '#9CA3AF',    // Input placeholder text
+  placeholder: ColorPalettes.text.muted,             // Input placeholder text
   
   // Button States
-  buttonDisabled: '#6b7280', // Disabled button background
+  buttonDisabled: ColorPalettes.text.disabled,       // Disabled button background
   
   // Transparent variations
-  transparent: 'transparent',
+  transparent: ColorPalettes.transparent.clear,
 } as const;
 
 export type ColorKey = keyof typeof Colors;
 
-// Helper function to get color with opacity
-export const getColorWithOpacity = (color: string, opacity: number): string => {
-  // Convert hex to rgba if needed
-  if (color.startsWith('#')) {
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  }
-  return color;
-};
+// Helper function to get color with opacity (re-export from palettes)
+export { getColorWithOpacity } from './helpers/colorPalettes';
 
 export default Colors; 

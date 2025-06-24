@@ -8,11 +8,15 @@ import {
   TouchableOpacity,
   View,
   Image,
+  Alert,
+  TextInput,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { updateLastLogin } from '../store/slices/userSlice';
+import { updateLastLogin, setUserName, setUserRegistered } from '../store/slices/userSlice';
+import { clearBiometricData } from '../store/slices/biometricSlice';
+import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -22,8 +26,7 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const { name, isRegistered, lastLoginDate } = useAppSelector((state) => state.user);
-  const { totalScansCompleted, lastScanDate, scanHistory } = useAppSelector((state) => state.biometric);
+  const { name, isRegistered } = useAppSelector((state) => state.user);
 
   useEffect(() => {
     // Update last login when user reaches home screen
@@ -51,21 +54,35 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.navigate('NewScreen');
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Never';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout? This will clear all your data.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => {
+            // Clear user data
+            dispatch(setUserName(''));
+            dispatch(setUserRegistered(false));
+            dispatch(clearBiometricData());
+            console.log('User logged out successfully');
+          },
+        },
+      ]
+    );
   };
 
-  const getWelcomeMessage = () => {
+  const getWelcomeMessage = () => {    
     if (isRegistered && name) {
-      return `Welcome back, ${name}!`;
+      return `Welcome back, ${name}!`;    
     }
-    return 'BioSecure';
+    return 'hyperI';
   };
 
   const getDescription = () => {
@@ -79,214 +96,163 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor="#FBF5FE"
+        backgroundColor={ColorPalettes.backgrounds.primary}
       />
-      {/* <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={styles.scrollView}> */}
+      {/* Logout Button - Top Right */}
+      {true && (
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.topSection}>
-            <View style={styles.headerContainer}>
+            <View style={styles.logoContainer}>
               <Image 
-                source={require('../../assets/images/appIcon.png')} 
+                source={require('../../assets/images/mainAppLogo.jpg')} 
                 style={styles.logo}
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.title}>
-              {getWelcomeMessage()}
-            </Text>
+            {
+              isRegistered && name ? getWelcomeMessage() : <></>
+            }       
             <Text style={styles.description}>
               {getDescription()}
             </Text>
-            
-            {isRegistered && (
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{totalScansCompleted}</Text>
-                  <Text style={styles.statLabel}>Total Scans</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{scanHistory.length}</Text>
-                  <Text style={styles.statLabel}>Sessions</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statDate}>{formatDate(lastScanDate)}</Text>
-                  <Text style={styles.statLabel}>Last Scan</Text>
-                </View>
-              </View>
-            )}
           </View>
+
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={handleScanFingers}
-            >
-              <Text style={styles.buttonText}>
-                {isRegistered ? 'Start Scanning' : 'Scan Fingers'}
-              </Text>
-            </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.button, styles.registerButton]} 
               onPress={handleRegister}
             >
-              <Text style={styles.buttonText}>
-                {isRegistered ? 'Update Profile' : 'Register'}
+              <Text style={[styles.buttonText, styles.registerButtonText]}>
+              Signup
               </Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.button, styles.newScreenButton]} 
-              onPress={handleNewScreen}
+              onPress={handleRegister}
             >
               <Text style={styles.buttonText}>
-                New Screen
+                Login
               </Text>
             </TouchableOpacity>
           </View>
         </View>
-      {/* </ScrollView> */}
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,    
-    width: '100%',
-    height: '100%', 
-    backgroundColor: '#FBF5FE',
-  },
-  content: {    
     flex: 1,
-    width: '100%',
-    height: '100%', 
+    backgroundColor: ColorPalettes.backgrounds.primary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  logoutContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    zIndex: 10,
+  },
+  logoutButton: {
+    backgroundColor: ColorPalettes.interactive.error,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    shadowColor: ColorPalettes.shadows.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.error,
+  },
+  logoutButtonText: {
+    color: ColorPalettes.text.light,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 50,
-    minHeight: 600,
+    paddingBottom: 16,
+    paddingTop: 24
   },
-  topSection: {    
-    flex: 1,
+  topSection: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerContainer: {
-    marginTop: -150,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#2D1A58',
+  logoContainer: {
+    width: 150,
+    height: 150,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
-    shadowColor: '#823280',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 2,
-    borderColor: '#9CA3AF',
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 170,
+    height: 170,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#020817',
+    color: ColorPalettes.text.primary,
     textAlign: 'center',
-    marginBottom: 20,
   },
   description: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#4F5866',
+    color: ColorPalettes.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 40,
     paddingHorizontal: 20,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 20,
+  buttonContainer: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#9CA3AF',
-    shadowColor: '#823280',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  statItem: {
     alignItems: 'center',
-    flex: 1,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#823280',
-    marginBottom: 4,
-  },
-  statDate: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#823280',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#4F5866',
-    textAlign: 'center',
-  },
-  buttonContainer: {    
-    position: 'absolute',
-    bottom: 16,
-    width: '100%',
-    alignItems: 'center',    
-    gap: 15,    
+    gap: 15,
+   
   },
   button: {
-    backgroundColor: '#823280',
+    backgroundColor: ColorPalettes.interactive.primary,
     paddingVertical: 18,
     paddingHorizontal: 40,
     borderRadius: 12,
-    alignItems: 'center',    
+    alignItems: 'center',
     width: '100%',
-    shadowColor: '#823280',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
     borderWidth: 1,
-    borderColor: '#9CA3AF',
+    borderColor: ColorPalettes.borders.light,
   },
-  registerButton: { 
-    backgroundColor: '#2D1A58',
-    borderColor: '#823280',
+  registerButton: {
+    backgroundColor: 'transparent',
+    borderColor: '#1E2772',
+  },
+  registerButtonText: {
+    color: '#1E2772',
   },
   newScreenButton: {
-    backgroundColor: '#10b981',
-    borderColor: '#059669',
+    backgroundColor: '#1E2772',
+    borderColor: '#1E2772',
   },
   buttonText: {
-    color: '#ffffff',
+    color: ColorPalettes.text.light,
     fontSize: 18,
     fontWeight: '600',
   },
