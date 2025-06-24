@@ -74,13 +74,13 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const config = {
     licenseKey: '9KM2-DLW6-E8VY-ADFI',
     numberFingersToCapture: 4,
-    captureType: 'LEFT_HAND_FINGERS',
+    captureType: 'LEFT_HAND_FINGERS',    
     outputType: 'CAPTURE_AND_SEGMENTATION',
     timeToCapture: 1,
     overlayColor: ColorPalettes.transparent.black30,
     imageQuality: {
-      compressionQuality: 100,
-      imageFormat: 'JPEG',
+      compressionQuality: 90,
+      imageFormat: 'PNG',
       enableHighResolution: true,
       antiAliasing: true,
     },
@@ -98,6 +98,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       brightnessAdjustment: 'auto',
       qualityThreshold: 80,
     },
+
     captureCountdown: {
       enabled: true,
       backgroundColor: ColorPalettes.transparent.black20,
@@ -124,7 +125,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       },
     },
     helpText: {
-      enabled: true,
+      enabled: false,
       messages: {
         leftHandMessage: 'Place your left hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
         rightHandMessage: 'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
@@ -135,7 +136,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     },
     fingerEllipse: {
       enabled: true,
-      ellipseColor: ColorPalettes.semantic.fingerprint + '80',
+      // ellipseColor: ColorPalettes.semantic.fingerprint + '80',
       thickness: 3,
     },
     distanceIndicator: {
@@ -143,15 +144,15 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       selectedBarColor: ColorPalettes.semantic.fingerprint,
       unselectedBarColor: ColorPalettes.text.light,
       arrowColor: ColorPalettes.semantic.fingerprint,
-      sensitivity: 'high',
+      sensitivity: 'low',
       tooCloseText: {
-        enabled: true,
+        enabled: false,
         content: 'Too close - move hand away for better focus',
         textColor: ColorPalettes.interactive.error,
         textSize: 16,
       },
       tooFarText: {
-        enabled: true,
+        enabled: false,
         content: 'Too far - bring hand closer for sharp capture',
         textColor: ColorPalettes.interactive.error,
         textSize: 16,
@@ -166,8 +167,8 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     motionDetection: {
       enabled: true,
       sensitivity: 'medium',
-      stabilizationTime: 2000,
-      motionThreshold: 0.1,
+      stabilizationTime: 1,
+      motionThreshold: 1.0,
     },
     qualityValidation: {
       enabled: true,
@@ -216,11 +217,6 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
               // Basic quality validation
               const imageSize = imageBase64.length;
               const estimatedQuality = imageSize > 50000 ? 'high' : imageSize > 20000 ? 'medium' : 'low';
-              
-              if (estimatedQuality === 'low') {
-                qualityIssues++;
-                console.warn(`Image ${index + 1} may be low quality (size: ${imageSize})`);
-              }
               
               // Store with enhanced metadata
               const processedImage = {
@@ -492,85 +488,6 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     }
   };
 
-  const saveAllImagesToGallery = async () => {
-    if (capturedImages.length === 0) {
-      Alert.alert('No Images', 'No fingerprint images to save.');
-      return;
-    }
-
-    Alert.alert(
-      'Save All Images',
-      `Do you want to save all ${capturedImages.length} fingerprint images to your photo gallery?`,
-      [
-        {
-          text: 'Save All',
-          onPress: async () => {
-            let successCount = 0;
-            let failCount = 0;
-            const errors: string[] = [];
-
-            for (let i = 0; i < capturedImages.length; i++) {
-              try {
-                const image = capturedImages[i];
-                
-                // Validate image URI
-                if (!image.uri || typeof image.uri !== 'string') {
-                  throw new Error(`Invalid image URI for image ${i + 1}`);
-                }
-
-                // Prepare the image URI for saving
-                const preparedUri = prepareImageForSave(image.uri);
-                console.log(`Saving image ${i + 1}/${capturedImages.length}:`, {
-                  originalUri: image.uri.substring(0, 50) + '...',
-                  preparedUri: preparedUri.substring(0, 50) + '...'
-                });
-
-                // Platform-specific save
-                if (Platform.OS === 'ios') {
-                  await CameraRoll.save(preparedUri, { type: 'photo' });
-                } else {
-                  await CameraRoll.save(preparedUri, {
-                    type: 'photo',
-                    album: 'hyperI Fingerprints',
-                  });
-                }
-                
-                successCount++;
-                console.log(`Successfully saved image ${i + 1}`);
-              } catch (error) {
-                console.error(`Failed to save image ${i + 1}:`, error);
-                failCount++;
-                if (error instanceof Error) {
-                  errors.push(`Image ${i + 1}: ${error.message}`);
-                }
-              }
-            }
-
-            let message = '';
-            if (failCount === 0) {
-              message = `🎉 Successfully saved all ${successCount} images to your photo gallery!`;
-            } else if (successCount === 0) {
-              message = `❌ Failed to save all images. Please check permissions and try again.`;
-            } else {
-              message = `⚠️ Saved ${successCount} images successfully. ${failCount} images failed to save.`;
-            }
-
-            // Show detailed error info if there were failures
-            if (failCount > 0 && errors.length > 0) {
-              message += `\n\nErrors:\n${errors.slice(0, 3).join('\n')}`;
-              if (errors.length > 3) {
-                message += `\n... and ${errors.length - 3} more`;
-              }
-            }
-
-            Alert.alert('Save Complete', message, [{ text: 'OK' }]);
-          },
-        },
-        { text: 'Cancel' },
-      ]
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -648,15 +565,6 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
           {capturedImages.length > 0 && (
             <>
-              {/* <TouchableOpacity 
-                style={styles.saveAllButton} 
-                onPress={saveAllImagesToGallery}
-              >
-                <Text style={styles.saveAllButtonText}>
-                  💾 Save All to Gallery ({capturedImages.length})
-                </Text>
-              </TouchableOpacity> */}
-
               <TouchableOpacity 
                 style={styles.clearButton} 
                 onPress={handleClearImages}
