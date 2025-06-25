@@ -228,7 +228,6 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     gap: 15,
-   
   },
   button: {
     backgroundColor: ColorPalettes.interactive.primary,
