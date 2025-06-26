@@ -102,6 +102,31 @@
         }
       }
     },
+    "@react-native-community/datetimepicker": {
+      "root": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/@react-native-community/datetimepicker",
+      "name": "@react-native-community/datetimepicker",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/@react-native-community/datetimepicker/RNDateTimePicker.podspec",
+          "version": "8.4.2",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/@react-native-community/datetimepicker/android",
+          "packageImportPath": "import com.reactcommunity.rndatetimepicker.RNDateTimePickerPackage;",
+          "packageInstance": "new RNDateTimePickerPackage()",
+          "buildTypes": [],
+          "libraryName": "RNDateTimePickerCGen",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/@react-native-community/datetimepicker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "@react-native-community/slider": {
       "root": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/node_modules/@react-native-community/slider",
       "name": "@react-native-community/slider",
@@ -539,7 +564,7 @@
         {
           "name": "--terminal <string>",
           "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "vscode"
+          "default": "Apple_Terminal"
         },
         {
           "name": "--binary-path <string>",
@@ -707,7 +732,7 @@
         {
           "name": "--terminal <string>",
           "description": "Launches the Metro Bundler in a new window using the specified terminal path.",
-          "default": "vscode"
+          "default": "Apple_Terminal"
         },
         {
           "name": "--appId <string>",
@@ -779,7 +804,9 @@
     "ios": {},
     "android": {}
   },
-  "assets": [],
+  "assets": [
+    "./assets/images/"
+  ],
   "project": {
     "ios": {
       "sourceDir": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/ios",
@@ -788,6 +815,7 @@
         "path": ".",
         "isWorkspace": true
       },
+      "automaticPodsInstallation": true,
       "assets": []
     },
     "android": {

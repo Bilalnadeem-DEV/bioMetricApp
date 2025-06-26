@@ -14,6 +14,11 @@ interface UserState {
     imageQuality: 'low' | 'medium' | 'high';
     enableNotifications: boolean;
   };
+
+  loggedInUserDetail: {
+    firstName: string;
+    lastName: string;
+  }
 }
 
 const initialState: UserState = {
@@ -30,6 +35,10 @@ const initialState: UserState = {
     imageQuality: 'high',
     enableNotifications: true,
   },
+  loggedInUserDetail: {
+    firstName: '',
+    lastName: '',
+  }
 };
 
 const userSlice = createSlice({
@@ -47,6 +56,17 @@ const userSlice = createSlice({
       if (action.payload && !state.registrationDate) {
         state.registrationDate = new Date().toISOString();
       }
+    },
+    setLoggedInUserDetail: (state, action: PayloadAction<{ firstName: string; lastName: string }>) => {
+      state.loggedInUserDetail = action.payload;
+      state.isRegistered = true
+    },
+    setResetLoggedInUserDetail: (state) => {
+      state.loggedInUserDetail = {
+        firstName: '',
+        lastName: '',
+      };
+      state.isRegistered = false
     },
     updateLastLogin: (state) => {
       state.lastLoginDate = new Date().toISOString();
@@ -88,6 +108,8 @@ export const {
   setUserFirstName,
   setUserLastName,
   setUserDateOfBirth,
+  setLoggedInUserDetail,
+  setResetLoggedInUserDetail
 } = userSlice.actions;
 
 export default userSlice.reducer; 

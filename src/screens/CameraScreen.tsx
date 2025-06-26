@@ -120,39 +120,69 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     );
     pulseAnimation.start();
     
-    return () => pulseAnimation.stop();
+    return () => {
+      pulseAnimation.stop();
+      pulseAnimation.reset();
+    };
   }, [pulseAnim]);
 
   const capturePhoto = async () => {
     if (camera.current && !isFocusing && !isCapturing) {
+      let captureTimeout: NodeJS.Timeout | null = null;
+      
       try {
         console.log(`Capturing image ${imageIndex + 1}...`);
         setIsCapturing(true);
         setIsFocusing(true);
         dispatch(clearError());
         
+        // Set a timeout to prevent indefinite hanging
+        captureTimeout = setTimeout(() => {
+          setIsFocusing(false);
+          setIsCapturing(false);
+          console.error('Capture operation timed out');
+          dispatch(setError('Capture operation timed out. Please try again.'));
+        }, 15000); // 15 second timeout
+        
         // Focus on the fingerprint area
         const fingerprintFocusPoint = { x: 0.5, y: 0.6 };
         
         try {
-          await camera.current.focus(fingerprintFocusPoint);
+          await Promise.race([
+            camera.current.focus(fingerprintFocusPoint),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Focus timeout')), 5000)
+            )
+          ]);
           console.log('Focus successful on fingerprint area');
         } catch (focusError) {
           console.log('Focus failed:', focusError);
+          // Continue without focus if it fails
         }
         
         // Wait for focus to stabilize
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        const photo = await camera.current.takePhoto({
-          enableShutterSound: false,
-        });
+        const photo = await Promise.race([
+          camera.current.takePhoto({
+            enableShutterSound: false,
+          }),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Photo capture timeout')), 10000)
+          )
+        ]);
+        
+        // Clear the timeout since capture was successful
+        if (captureTimeout) {
+          clearTimeout(captureTimeout);
+          captureTimeout = null;
+        }
         
         const imageUri = `file://${photo.path}`;
         console.log('Image captured:', imageUri);
         
         // Zoom animation after capture
-        Animated.sequence([
+        const zoomAnimation = Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.3,
             duration: 200,
@@ -163,14 +193,20 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
             duration: 300,
             useNativeDriver: true,
           }),
-        ]).start();
+        ]);
+        zoomAnimation.start();
         
-        // Save image to gallery
+        // Save image to gallery with timeout protection
         try {
-          await CameraRoll.saveAsset(imageUri, {
-            type: 'photo',
-            album: 'hyperI Scans'
-          });
+          await Promise.race([
+            CameraRoll.saveAsset(imageUri, {
+              type: 'photo',
+              album: 'hyperI Scans'
+            }),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Save timeout')), 8000)
+            )
+          ]);
           dispatch(setStoragePermission('granted'));
         } catch (saveError) {
           console.error('Error saving image:', saveError);
@@ -178,14 +214,19 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           dispatch(setError('Failed to save image to gallery'));
         }
         
-        // Get image dimensions for Redux store
-        const imageSize = await new Promise<{width: number, height: number}>((resolve) => {
-          require('react-native').Image.getSize(imageUri, (width: number, height: number) => {
-            resolve({ width, height });
-          }, () => {
-            resolve({ width: 0, height: 0 });
-          });
-        });
+        // Get image dimensions for Redux store with timeout
+        const imageSize = await Promise.race([
+          new Promise<{width: number, height: number}>((resolve) => {
+            require('react-native').Image.getSize(imageUri, (width: number, height: number) => {
+              resolve({ width, height });
+            }, () => {
+              resolve({ width: 0, height: 0 });
+            });
+          }),
+          new Promise<{width: number, height: number}>((resolve) => 
+            setTimeout(() => resolve({ width: 0, height: 0 }), 3000)
+          )
+        ]);
         
         // Add to Redux store
         dispatch(addCapturedImage({
@@ -212,6 +253,12 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         
       } catch (error) {
         console.error('Error capturing image:', error);
+        
+        // Clear timeout if it exists
+        if (captureTimeout) {
+          clearTimeout(captureTimeout);
+        }
+        
         setIsFocusing(false);
         setIsCapturing(false);
         dispatch(setError('Failed to capture biometric scan. Please try again.'));

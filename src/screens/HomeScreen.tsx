@@ -9,12 +9,11 @@ import {
   View,
   Image,
   Alert,
-  TextInput,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { updateLastLogin, setUserName, setUserRegistered } from '../store/slices/userSlice';
+import { updateLastLogin, setUserName, setUserRegistered, setResetLoggedInUserDetail } from '../store/slices/userSlice';
 import { clearBiometricData } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
@@ -26,7 +25,7 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const { name, isRegistered } = useAppSelector((state) => state.user);
+  const { name, isRegistered, loggedInUserDetail } = useAppSelector((state) => state.user);
 
   useEffect(() => {
     // Update last login when user reaches home screen
@@ -38,33 +37,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.navigate('Register');
   };
 
-  const handleNewScreen = () => {
-    console.log('Navigating to New screen');
-    navigation.navigate('NewScreen');
-  };
-
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout? This will clear all your data.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => {
-            // Clear user data
-            dispatch(setUserName(''));
-            dispatch(setUserRegistered(false));
-            dispatch(clearBiometricData());
-            console.log('User logged out successfully');
-          },
-        },
-      ]
-    );
+    dispatch(setUserName(''));
+    dispatch(setUserRegistered(false));
+    dispatch(clearBiometricData());
+    dispatch(setResetLoggedInUserDetail());
+   
   };
 
   const getWelcomeMessage = () => {    
@@ -88,13 +66,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         backgroundColor={ColorPalettes.backgrounds.primary}
       />
       {/* Logout Button - Top Right */}
-      {true && (
+      {/* {isRegistered && (
         <View style={styles.logoutContainer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
         </View>
-      )}
+      )} */}
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
@@ -106,32 +84,46 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 resizeMode="contain"
               />
             </View>
-            {
-              isRegistered && name ? getWelcomeMessage() : <></>
-            }       
+            {(isRegistered && name) && (
+              <Text style={styles.welcomeText}>
+                {getWelcomeMessage()}
+              </Text>
+            )}       
             <Text style={styles.description}>
               {getDescription()}
             </Text>
-          </View>
+            {isRegistered && (
+            <View style={styles.userDetailsContainer}>
+              <Text style={styles.userDetailText}>
+                First Name: {loggedInUserDetail.firstName}
+              </Text>
+              <Text style={styles.userDetailText}>
+                Last Name: {loggedInUserDetail.lastName} 
+              </Text>
+            </View>
+          )}
+          </View>      
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, styles.registerButton]} 
-              onPress={handleRegister}
-            >
-              <Text style={[styles.buttonText, styles.registerButtonText]}>
-              Signup
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.newScreenButton]} 
-              onPress={() => navigation.navigate('Login')}
-            >
-              <Text style={styles.buttonText}>
-                Login
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* {!isRegistered && ( */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, styles.registerButton]} 
+                onPress={handleRegister}
+              >
+                <Text style={[styles.buttonText, styles.registerButtonText]}>
+                  Signup
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.button, styles.newScreenButton]} 
+                onPress={() => navigation.navigate('Login')}
+              >
+                <Text style={styles.buttonText}>
+                  Login
+                </Text>
+              </TouchableOpacity>
+            </View>
+          {/* )} */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -198,11 +190,12 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
   },
-  title: {
-    fontSize: 32,
+  welcomeText: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: ColorPalettes.text.primary,
     textAlign: 'center',
+    marginTop: 20,
   },
   description: {
     fontSize: 16,
@@ -243,6 +236,21 @@ const styles = StyleSheet.create({
     color: ColorPalettes.text.light,
     fontSize: 18,
     fontWeight: '600',
+  },
+  userDetailsContainer: {
+    width: '100%',
+    backgroundColor: ColorPalettes.backgrounds.secondary,
+    borderRadius: 12,
+    padding: 20,
+    marginVertical: 20,
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.light,
+  },
+  userDetailText: {
+    fontSize: 16,
+    color: ColorPalettes.text.primary,
+    marginBottom: 8,
+    fontWeight: '500',
   },
 });
 

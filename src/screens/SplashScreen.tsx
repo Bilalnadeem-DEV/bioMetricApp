@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,12 +23,13 @@ interface Props {
 const { width, height } = Dimensions.get('window');
 
 const SplashScreen: React.FC<Props> = ({ navigation }) => {
-  const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.8);
+  // Use useRef to prevent recreating animations on every render
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     // Start animations
-    Animated.parallel([
+    const animationSequence = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 1000,
@@ -39,14 +40,20 @@ const SplashScreen: React.FC<Props> = ({ navigation }) => {
         duration: 1000,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
+
+    animationSequence.start();
 
     // Navigate to Home screen after 3 seconds
     const timer = setTimeout(() => {
       navigation.replace('Home');
     }, 3000);
 
-    return () => clearTimeout(timer);
+    // Cleanup function to prevent memory leaks
+    return () => {
+      clearTimeout(timer);
+      animationSequence.stop();
+    };
   }, [navigation, fadeAnim, scaleAnim]);
 
   return (

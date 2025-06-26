@@ -55,6 +55,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [fingerprintSDK, setFingerprintSDK] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const {CNIC, name, firstName, lastName, dateOfBirth} = useAppSelector((state) => state.user)
 
   useEffect(() => {
     const loadSDK = async () => {
@@ -511,9 +512,9 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       };
 
       const userData = {
-        cnic: '1231231231231',
-        first_name: 'John',
-        last_name: 'Doe',
+        cnic: CNIC,
+        first_name: firstName,
+        last_name: lastName,
         date_of_birth: '1990-01-01',
         ...fingerMap
       };

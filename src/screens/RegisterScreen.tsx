@@ -32,10 +32,15 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { name: userName, isRegistered } = useAppSelector((state) => state.user);
   
-  const [cnic, setCnic] = useState('5454545454545');
-  const [firstName, setFirstName] = useState('John');
-  const [lastName, setLastName] = useState('Doe');
-  const [dateOfBirth, setDateOfBirth] = useState('01/01/1990');
+  // const [cnic, setCnic] = useState('5454545454545');
+  // const [firstName, setFirstName] = useState('John');
+  // const [lastName, setLastName] = useState('Doe');
+  // const [dateOfBirth, setDateOfBirth] = useState('01/01/1990');
+
+  const [cnic, setCnic] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [cnicError, setCnicError] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');

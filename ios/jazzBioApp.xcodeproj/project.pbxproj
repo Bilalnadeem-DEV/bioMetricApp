@@ -12,6 +12,8 @@
 		3712D17CBEEF6A177244A29F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		33104A89783F4D9DBB714A91 /* appIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2609F3E4A94445F1A21AD3FC /* appIcon.png */; };
+		623B82666EC24BB09F77CAE8 /* mainAppLogo.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 49783BBCDEAC4B128B599169 /* mainAppLogo.jpg */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +27,8 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = jazzBioApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = jazzBioApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		2609F3E4A94445F1A21AD3FC /* appIcon.png */ = {isa = PBXFileReference; name = "appIcon.png"; path = "../assets/images/appIcon.png"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		49783BBCDEAC4B128B599169 /* mainAppLogo.jpg */ = {isa = PBXFileReference; name = "mainAppLogo.jpg"; path = "../assets/images/mainAppLogo.jpg"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +79,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				997E43F8CA2E4E52B7022BF2 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -97,6 +102,16 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
+		};
+		997E43F8CA2E4E52B7022BF2 /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				2609F3E4A94445F1A21AD3FC /* appIcon.png */,
+				49783BBCDEAC4B128B599169 /* mainAppLogo.jpg */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
 		};
 /* End PBXGroup section */
 
@@ -161,6 +176,8 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3712D17CBEEF6A177244A29F /* PrivacyInfo.xcprivacy in Resources */,
+				33104A89783F4D9DBB714A91 /* appIcon.png in Resources */,
+				623B82666EC24BB09F77CAE8 /* mainAppLogo.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
