@@ -28,6 +28,7 @@ import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import RNFS from 'react-native-fs';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 import { biometricService } from '../services/biometric.service';
+import { setLoggedInUserDetail, setUserRegistered } from '../store/slices/userSlice';
 
 type NewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'NewScreen'>;
 
@@ -37,16 +38,16 @@ interface NewScreenProps {
 
 const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  
+
   // Get data from Redux store
-  const userName = useAppSelector((state) => state.user.name);
+  const userName = useAppSelector(state => state.user.name);
   const {
     capturedImages,
     isScanning,
     currentSession,
     error: biometricError,
     totalScansCompleted,
-  } = useAppSelector((state) => state.biometric);
+  } = useAppSelector(state => state.biometric);
 
   // Local state for SDK management
   const [captureStatus, setCaptureStatus] = useState<string>('Bio metric service is live');
@@ -55,7 +56,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [fingerprintSDK, setFingerprintSDK] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
-  const {CNIC, name, firstName, lastName, dateOfBirth} = useAppSelector((state) => state.user)
+  const { CNIC, name, firstName, lastName, dateOfBirth } = useAppSelector(state => state.user);
 
   useEffect(() => {
     const loadSDK = async () => {
@@ -79,7 +80,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const config = {
     licenseKey: '9KM2-DLW6-E8VY-ADFI',
     numberFingersToCapture: 4,
-    captureType: 'LEFT_HAND_FINGERS',    
+    captureType: 'LEFT_HAND_FINGERS',
     outputType: 'CAPTURE_AND_SEGMENTATION',
     timeToCapture: 1,
     overlayColor: ColorPalettes.transparent.black30,
@@ -132,9 +133,12 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     helpText: {
       enabled: false,
       messages: {
-        leftHandMessage: 'Place your left hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
-        rightHandMessage: 'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
-        thumbsMessage: 'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
+        leftHandMessage:
+          'Place your left hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
+        rightHandMessage:
+          'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
+        thumbsMessage:
+          'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
       },
       textColor: ColorPalettes.text.light,
       textSize: 16,
@@ -193,7 +197,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       Alert.alert(
         'Service Unavailable',
         'The fingerprint service is not available right now. Please:\n\n1. Close the app completely\n2. Restart the app\n3. Try again',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
       return;
     }
@@ -202,7 +206,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       // Start scan session in Redux
       dispatch(startScanSession({ userName: userName || 'Unknown User' }));
       setCaptureStatus('Preparing fingerprint capture...');
-      
+
       const { useFingerprint } = fingerprintSDK;
       const { takeFingerprint } = useFingerprint();
 
@@ -217,11 +221,12 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             // Validate and process each captured image
             const processedImages: any[] = [];
             let qualityIssues = 0;
-            
-            images.forEach((imageBase64, index) => {              
+
+            images.forEach((imageBase64, index) => {
               const imageSize = imageBase64.length;
-              const estimatedQuality = imageSize > 50000 ? 'high' : imageSize > 20000 ? 'medium' : 'low';
-              
+              const estimatedQuality =
+                imageSize > 50000 ? 'high' : imageSize > 20000 ? 'medium' : 'low';
+
               // Store with enhanced metadata
               const processedImage = {
                 uri: `data:image/jpeg;base64,${imageBase64}`,
@@ -230,65 +235,59 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                 size: { width: 1280, height: 720 },
                 fileSize: imageSize,
                 processingTimestamp: new Date().toISOString(),
-                qualityScore: estimatedQuality === 'high' ? 90 : estimatedQuality === 'medium' ? 70 : 50,
+                qualityScore:
+                  estimatedQuality === 'high' ? 90 : estimatedQuality === 'medium' ? 70 : 50,
               };
-              
+
               processedImages.push(processedImage);
-              
+
               dispatch(addCapturedImage(processedImage));
             });
-            
+
             setCaptureStatus(`Successfully captured ${images.length} high-quality fingerprint(s)`);
             dispatch(endScanSession({ status: 'completed' }));
-            
+
             // Show quality feedback
-            const qualityMessage = qualityIssues > 0 
-              ? `Captured ${images.length} images. ${qualityIssues} may need recapture for optimal quality.`
-              : `Captured ${images.length} high-quality fingerprint images!`;
-            
-            Alert.alert(
-              'Capture Complete!', 
-              `${qualityMessage}\n\nImages saved to Redux store with quality metadata.`,
-              [
-                { 
-                  text: 'View Images', 
-                  onPress: () => console.log('High-quality fingerprints stored:', processedImages.map(img => ({
-                    index: img.index,
-                    quality: img.quality,
-                    qualityScore: img.qualityScore,
-                    fileSize: img.fileSize
-                  })))
-                },
-                { text: 'OK' }
-              ]
-            );
+            const qualityMessage =
+              qualityIssues > 0
+                ? `Captured ${images.length} images. ${qualityIssues} may need recapture for optimal quality.`
+                : `Captured ${images.length} high-quality fingerprint images!`;
+
+            Alert.alert('Capture Complete!', `${qualityMessage}`, [
+              {
+                text: 'View Images',
+                onPress: () => handleSendBiometric(),
+              },
+              { text: 'OK' },
+            ]);
           }
         },
         onStatusChanged: (state: any) => {
           console.log('Capture status changed:', state);
           // Enhanced status handling for better image quality feedback
           const statusMap: { [key: string]: string } = {
-            'NO_DETECTION': 'No fingers detected - place hand on scanner',
-            'MISSING_FINGERS': 'Missing fingers - place all 4 fingers for complete capture',
-            'TOO_CLOSE': 'Too close - move hand away for better focus and sharpness',
-            'TOO_FAR': 'Too far - bring hand closer for high-resolution capture',
-            'MOTION_DETECTED': 'Hand movement detected - hold steady for sharp images',
-            'POOR_LIGHTING': 'Poor lighting - ensure adequate lighting for clear images',
-            'LOW_QUALITY': 'Low quality detected - adjust hand position',
-            'BLUR_DETECTED': 'Motion blur detected - hold hand completely still',
-            'FOCUS_ADJUSTING': 'Camera focusing - hold steady for optimal sharpness',
-            'STABILIZING': 'Stabilizing - preparing for high-quality capture',
-            'OK': 'Perfect position - capturing high-quality images...',
-            'PROCESSING': 'Processing high-resolution fingerprints...',
-            'QUALITY_CHECK': 'Validating image quality...',
-            'STOPPED': 'Capture stopped',
-            'MODEL_NOT_FOUND': 'AI model not found - check SDK installation',
-            'READY': 'Ready for high-quality capture',
+            NO_DETECTION: 'No fingers detected - place hand on scanner',
+            MISSING_FINGERS: 'Missing fingers - place all 4 fingers for complete capture',
+            TOO_CLOSE: 'Too close - move hand away for better focus and sharpness',
+            TOO_FAR: 'Too far - bring hand closer for high-resolution capture',
+            MOTION_DETECTED: 'Hand movement detected - hold steady for sharp images',
+            POOR_LIGHTING: 'Poor lighting - ensure adequate lighting for clear images',
+            LOW_QUALITY: 'Low quality detected - adjust hand position',
+            BLUR_DETECTED: 'Motion blur detected - hold hand completely still',
+            FOCUS_ADJUSTING: 'Camera focusing - hold steady for optimal sharpness',
+            STABILIZING: 'Stabilizing - preparing for high-quality capture',
+            OK: 'Perfect position - capturing high-quality images...',
+            PROCESSING: 'Processing high-resolution fingerprints...',
+            QUALITY_CHECK: 'Validating image quality...',
+            STOPPED: 'Capture stopped',
+            MODEL_NOT_FOUND: 'AI model not found - check SDK installation',
+            READY: 'Ready for high-quality capture',
           };
-          
-          const statusText = statusMap[state] || statusMap[state.toString()] || 'Preparing for capture...';
+
+          const statusText =
+            statusMap[state] || statusMap[state.toString()] || 'Preparing for capture...';
           setCaptureStatus(statusText);
-          
+
           // Provide additional quality tips based on status
           if (state === 'MOTION_DETECTED' || state === 'BLUR_DETECTED') {
             console.log('💡 Quality tip: Hold hand completely still for 2-3 seconds');
@@ -305,9 +304,14 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       });
     } catch (error) {
       setCaptureStatus('Capture failed');
-      dispatch(endScanSession({ status: 'error', error: 'Failed to initialize fingerprint capture' }));
+      dispatch(
+        endScanSession({ status: 'error', error: 'Failed to initialize fingerprint capture' }),
+      );
       console.error('Fingerprint capture error:', error);
-      Alert.alert('Error', 'Failed to initialize fingerprint capture. Please ensure the SDK is properly linked.');
+      Alert.alert(
+        'Error',
+        'Failed to initialize fingerprint capture. Please ensure the SDK is properly linked.',
+      );
     }
   };
 
@@ -321,29 +325,29 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     Alert.alert(
       'Rebuild Instructions',
       'To properly use the fingerprint service:\n\n1. Close the app completely\n2. Restart the app\n3. Try again',
-      [{ text: 'Got it!' }]
+      [{ text: 'Got it!' }],
     );
   };
 
   const prepareImageForSave = (imageUri: string): string => {
     // Log the original URI format
     console.log('Original image URI format:', imageUri.substring(0, 100));
-    
+
     // If it's already a base64 data URI, CameraRoll should handle it
     if (imageUri.startsWith('data:image/')) {
       return imageUri;
     }
-    
+
     // If it's a file:// URI, return as is
     if (imageUri.startsWith('file://')) {
       return imageUri;
     }
-    
+
     // If it's just base64 without the data URI prefix, add it
     if (imageUri.match(/^[A-Za-z0-9+/]+=*$/)) {
       return `data:image/jpeg;base64,${imageUri}`;
     }
-    
+
     return imageUri;
   };
 
@@ -368,14 +372,14 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     try {
       // Extract base64 data (remove data:image/jpeg;base64, prefix if present)
       const base64Image = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
-      
+
       // Create a temporary file path
       const fileName = `fingerprint_${Date.now()}_${imageIndex}.jpg`;
       const filePath = `${RNFS.TemporaryDirectoryPath}/${fileName}`;
-      
+
       // Write base64 data to file
       await RNFS.writeFile(filePath, base64Image, 'base64');
-      
+
       console.log('Temporary file created:', filePath);
       return filePath;
     } catch (error) {
@@ -397,9 +401,9 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         throw new Error('Photo library permission denied');
       }
 
-      console.log('Starting save process for image:', { 
+      console.log('Starting save process for image:', {
         imageIndex,
-        uriStart: imageUri.substring(0, 50) + '...'
+        uriStart: imageUri.substring(0, 50) + '...',
       });
 
       let filePathToSave: string;
@@ -433,7 +437,10 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       }
 
       // Clean up temporary file if we created one
-      if (imageUri.startsWith('data:image/') && filePathToSave.includes(RNFS.TemporaryDirectoryPath)) {
+      if (
+        imageUri.startsWith('data:image/') &&
+        filePathToSave.includes(RNFS.TemporaryDirectoryPath)
+      ) {
         try {
           await RNFS.unlink(filePathToSave);
           console.log('Temporary file cleaned up');
@@ -450,13 +457,13 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             text: 'OK',
             onPress: () => console.log('Image saved successfully:', result),
           },
-        ]
+        ],
       );
 
       console.log('Image saved to gallery:', result);
     } catch (error) {
       console.error('Error saving image to gallery:', error);
-      
+
       let errorMessage = 'Failed to save image to gallery.';
       if (error instanceof Error) {
         if (error.message.includes('permission') || error.message.includes('denied')) {
@@ -479,15 +486,15 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             onPress: () => {
               Alert.alert(
                 'Settings Guide',
-                Platform.OS === 'ios' 
+                Platform.OS === 'ios'
                   ? 'Go to Settings > Privacy & Security > Photos > hyperI and enable "Add Photos Only" or "Full Access".'
                   : 'Go to Settings > Apps > hyperI > Permissions > Storage and enable it.',
-                [{ text: 'Got it' }]
+                [{ text: 'Got it' }],
               );
             },
           },
           { text: 'Cancel' },
-        ]
+        ],
       );
     }
   };
@@ -497,7 +504,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       Alert.alert(
         'Missing Fingerprints',
         'Please capture all four fingerprints before sending for biometric registration.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
       return;
     }
@@ -516,37 +523,42 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         first_name: firstName,
         last_name: lastName,
         date_of_birth: '1990-01-01',
-        ...fingerMap
+        ...fingerMap,
       };
 
       // Start the API call
       setIsRegistering(true);
       const response = await biometricService.register(userData);
       console.log('Registration response:', response);
-        
+      if (response.user_data) {
+        dispatch(
+          setLoggedInUserDetail({
+            firstName: response.user_data.first_name,
+            lastName: response.user_data.last_name,
+            cnic: response.user_data.cnic,
+          }),
+        );
+      }
       setIsRegistering(false);
-      Alert.alert(
-        'Success',
-        'Biometric verification completed successfully!',
-        [
-          { 
-            text: 'OK',
-            onPress: () => {
-              // Clear the biometric data
-              dispatch(clearBiometricData());
-              // Navigate to home screen
-              navigation.pop(2);
-            }
-          }
-        ]
-      );
+      Alert.alert('Success', 'Biometric verification completed successfully!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Clear the biometric data
+            dispatch(clearBiometricData());
+            dispatch(setUserRegistered(true));
+            // Navigate to home screen
+            navigation.pop(2);
+          },
+        },
+      ]);
     } catch (error: any) {
       setIsRegistering(false);
       console.error('Registration failed:', error);
       Alert.alert(
         'Registration Error',
         error.response?.data?.message || error.message || 'Failed to send biometric data',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
     }
   };
@@ -564,40 +576,36 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={ColorPalettes.backgrounds.primary}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-         
+
           <View style={styles.logoContainer}>
-            <Image 
-              source={require('../../assets/images/mainAppLogo.jpg')} 
+            <Image
+              source={require('../../assets/images/mainAppLogo.jpg')}
               style={styles.logo}
               resizeMode="contain"
             />
-          </View>          
-          <Text style={styles.subtitle}>Secure biometric authentication</Text>      
+          </View>
+          <Text style={styles.subtitle}>Secure biometric authentication</Text>
         </View>
 
         <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>Service Status:</Text>
-          <Text style={[
-            styles.statusText, 
-            isScanning && styles.statusActive,
-            sdkError && styles.statusError,
-            sdkLoaded && !sdkError && styles.statusSuccess
-          ]}>
+          <Text
+            style={[
+              styles.statusText,
+              isScanning && styles.statusActive,
+              sdkError && styles.statusError,
+              sdkLoaded && !sdkError && styles.statusSuccess,
+            ]}>
             {sdkError || captureStatus}
           </Text>
           {fingerRects.length > 0 && (
-            <Text style={styles.fingerCount}>
-              Fingers detected: {fingerRects.length}
-            </Text>
+            <Text style={styles.fingerCount}>Fingers detected: {fingerRects.length}</Text>
           )}
         </View>
 
@@ -610,59 +618,37 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             <Text style={styles.errorStep}>1. Close the app completely</Text>
             <Text style={styles.errorStep}>2. Restart the app</Text>
             <Text style={styles.errorStep}>3. Try again</Text>
-            
-            <TouchableOpacity 
-              style={styles.helpButton} 
-              onPress={handleRebuildInstructions}
-            >
+
+            <TouchableOpacity style={styles.helpButton} onPress={handleRebuildInstructions}>
               <Text style={styles.helpButtonText}>Get Help</Text>
             </TouchableOpacity>
           </View>
         )}
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={[
-              styles.captureButton, 
-              (!sdkLoaded) && styles.captureButtonDisabled
-            ]} 
+          <TouchableOpacity
+            style={[styles.captureButton, !sdkLoaded && styles.captureButtonDisabled]}
             onPress={handleCaptureFingerprints}
-            disabled={!sdkLoaded}
-          >
+            disabled={!sdkLoaded}>
             <Text style={styles.captureButtonText}>
-              {!sdkLoaded 
+              {!sdkLoaded
                 ? 'Service Unavailable'
                 : capturedImages.length > 0
-                  ? 'Scan fingerprint again'
-                  : 'Start Fingerprint Scan'
-              }
+                ? 'Scan fingerprint again'
+                : 'Start Fingerprint Scan'}
             </Text>
           </TouchableOpacity>
 
-          {capturedImages.length > 0 && (
-            <>
-              <TouchableOpacity 
-                style={styles.clearButton} 
-                onPress={handleClearImages}
-              >
-                <Text style={styles.clearButtonText}>
-                  Clear All Images ({capturedImages.length})
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
-
           {capturedImages && capturedImages.length > 0 && (
-            <TouchableOpacity 
-              style={[styles.button, styles.sendButton]} 
-              onPress={handleSendBiometric}
-            >
+            <TouchableOpacity
+              style={[styles.button, styles.sendButton]}
+              onPress={handleSendBiometric}>
               <Text style={styles.buttonText}>Send for bioMetric</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {capturedImages.length > 0 && (
+        {/* {capturedImages.length > 0 && (
           <View style={styles.resultsContainer}>
             <Text style={styles.resultsTitle}>Captured Fingerprints:</Text>
             <Text style={styles.reduxInfo}>
@@ -704,19 +690,19 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                       Size: {Math.round(image.fileSize / 1024)}KB
                     </Text>
                   )}
-                  {/* <TouchableOpacity 
+                  <TouchableOpacity 
                     style={styles.saveImageButton}
                     onPress={() => saveImageToGallery(image.uri, image.index)}
                   >
                     <Text style={styles.saveImageButtonText}>💾 Save</Text>
-                  </TouchableOpacity> */}
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
           </View>
-        )}      
+        )}       */}
       </ScrollView>
-      
+
       {isRegistering && <LoadingOverlay />}
     </SafeAreaView>
   );
@@ -887,7 +873,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 15, 
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: '#1E2772',
   },
@@ -1101,7 +1087,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E2772',
     marginBottom: 10,
     marginTop: 18,
-
   },
   buttonText: {
     color: ColorPalettes.text.light,
@@ -1176,4 +1161,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NewScreen; 
+export default NewScreen;

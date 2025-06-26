@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   SafeAreaView,
   View,
@@ -12,11 +12,12 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setUserCNIC, setUserDateOfBirth, setUserFirstName, setUserLastName, setUserName, setUserRegistered } from '../store/slices/userSlice';
+import { setUserCNIC, setUserDateOfBirth, setUserFirstName, setUserLastName, setUserName } from '../store/slices/userSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type RegisterScreenNavigationProp = StackNavigationProp<
@@ -45,6 +46,25 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
   const [dobError, setDobError] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  // Add refs for TextInputs to manage focus properly
+  const firstNameInputRef = useRef<TextInput>(null);
+  const lastNameInputRef = useRef<TextInput>(null);
+  const cnicInputRef = useRef<TextInput>(null);
+
+  // Add useEffect to handle navigation cleanup
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      // Dismiss keyboard and blur all inputs when leaving screen
+      Keyboard.dismiss();
+      firstNameInputRef.current?.blur();
+      lastNameInputRef.current?.blur();
+      cnicInputRef.current?.blur();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const validateCnic = (inputCnic: string): boolean => {
     const trimmedCnic = inputCnic.trim();
@@ -89,22 +109,16 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     return true;
   };
 
-  const validateLastName = (inputName: string): boolean => {
-    const trimmedName = inputName.trim();
+  const validateLastName = (inputLastName: string): boolean => {
+    const trimmedLastName = inputLastName.trim();
     
-    if (!trimmedName) {
+    if (!trimmedLastName) {
       setLastNameError('Last name is required');
       return false;
     }
     
-    if (trimmedName.length < 2) {
-      setLastNameError('Last name must be at least 2 characters long');
-      return false;
-    }
-    
-    const nameRegex = /^[a-zA-Z\s\-']+$/;
-    if (!nameRegex.test(trimmedName)) {
-      setLastNameError('Last name can only contain letters, spaces, hyphens, and apostrophes');
+    if (trimmedLastName.length < 2) {
+      setLastNameError('Last name must be at least 2 characters');
       return false;
     }
     
@@ -142,8 +156,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     return true;
   };
 
-  const handleCnicChange = (value: string) => {
-    // Format CNIC as user types (12345-1234567-1)
+  const handleCnicChange = (value: string) => {    
     let formatted = value.replace(/\D/g, '');
     if (formatted.length > 5) {
       formatted = formatted.substring(0, 5) + '-' + formatted.substring(5);
@@ -186,31 +199,36 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
+    // Dismiss keyboard before processing
+    Keyboard.dismiss();
+    firstNameInputRef.current?.blur();
+    lastNameInputRef.current?.blur();
+    cnicInputRef.current?.blur();
+
     const isCnicValid = validateCnic(cnic);
     const isFirstNameValid = validateFirstName(firstName);
     const isLastNameValid = validateLastName(lastName);
-    const isDobValid = validateDateOfBirth(dateOfBirth);
-    
-    if (!isCnicValid || !isFirstNameValid || !isLastNameValid || !isDobValid) {
+
+    if (!isCnicValid || !isFirstNameValid || !isLastNameValid) {
       return;
     }
 
-    // Combine first and last name for the full name
-    const fullName = `${firstName.trim()} ${lastName.trim()}`;
-
-    // Save user data to Redux store
-    dispatch(setUserName(fullName));
-
-    dispatch(setUserCNIC(cnic));
-    dispatch(setUserFirstName(firstName));
-    dispatch(setUserLastName(lastName));
-    dispatch(setUserDateOfBirth(dateOfBirth));
-
+    dispatch(setUserName(`${firstName} ${lastName}`));
+    dispatch(setUserCNIC(cnic.replace(/\D/g, '')));
+    dispatch(setUserFirstName(firstName))
+    dispatch(setUserLastName(firstName))    
+    
+    // Navigate to BiometricLogin after successful registration
     navigation.navigate('NewScreen');
   };
 
   const handleBack = () => {
+    // Properly dismiss keyboard and blur inputs before navigation
+    Keyboard.dismiss();
+    firstNameInputRef.current?.blur();
+    lastNameInputRef.current?.blur();
+    cnicInputRef.current?.blur();
     navigation.goBack();
   };
 
@@ -251,6 +269,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>CNIC</Text>
                 <TextInput
+                  ref={cnicInputRef}
                   style={[styles.input, cnicError ? styles.inputError : null]}
                   placeholder="Enter your CNIC (e.g., 12345-1234567-1)"
                   placeholderTextColor={ColorPalettes.text.muted}
@@ -259,6 +278,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   onBlur={() => validateCnic(cnic)}
                   keyboardType="numeric"
                   maxLength={15}
+                  returnKeyType="next"
+                  onSubmitEditing={() => firstNameInputRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
                 {cnicError ? <Text style={styles.errorText}>{cnicError}</Text> : null}
               </View>
@@ -266,14 +288,16 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>First Name</Text>
                 <TextInput
+                  ref={firstNameInputRef}
                   style={[styles.input, firstNameError ? styles.inputError : null]}
                   placeholder="Enter your first name"
                   placeholderTextColor={ColorPalettes.text.muted}
                   value={firstName}
                   onChangeText={handleFirstNameChange}
                   onBlur={() => validateFirstName(firstName)}
-                  autoCapitalize="words"
-                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={() => lastNameInputRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
                 {firstNameError ? <Text style={styles.errorText}>{firstNameError}</Text> : null}
               </View>
@@ -281,14 +305,19 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Last Name</Text>
                 <TextInput
+                  ref={lastNameInputRef}
                   style={[styles.input, lastNameError ? styles.inputError : null]}
                   placeholder="Enter your last name"
                   placeholderTextColor={ColorPalettes.text.muted}
                   value={lastName}
                   onChangeText={handleLastNameChange}
                   onBlur={() => validateLastName(lastName)}
-                  autoCapitalize="words"
-                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    Keyboard.dismiss();
+                    lastNameInputRef.current?.blur();
+                  }}
+                  blurOnSubmit={true}
                 />
                 {lastNameError ? <Text style={styles.errorText}>{lastNameError}</Text> : null}
               </View>

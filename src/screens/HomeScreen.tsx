@@ -13,7 +13,12 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { updateLastLogin, setUserName, setUserRegistered, setResetLoggedInUserDetail } from '../store/slices/userSlice';
+import {
+  updateLastLogin,
+  setUserName,
+  setUserRegistered,
+  setResetLoggedInUserDetail,
+} from '../store/slices/userSlice';
 import { clearBiometricData } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
@@ -25,7 +30,7 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const { name, isRegistered, loggedInUserDetail } = useAppSelector((state) => state.user);
+  const { name, isRegistered, loggedInUserDetail } = useAppSelector(state => state.user);
 
   useEffect(() => {
     // Update last login when user reaches home screen
@@ -42,12 +47,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     dispatch(setUserRegistered(false));
     dispatch(clearBiometricData());
     dispatch(setResetLoggedInUserDetail());
-   
   };
 
-  const getWelcomeMessage = () => {    
+  const getWelcomeMessage = () => {
     if (isRegistered && name) {
-      return `Welcome back, ${name}!`;    
+      return `Welcome back, ${name}!`;
     }
     return 'hyperI';
   };
@@ -61,68 +65,51 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={ColorPalettes.backgrounds.primary}
-      />
-      {/* Logout Button - Top Right */}
-      {/* {isRegistered && (
-        <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      )} */}
-      
+      <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
+
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {isRegistered && (
+          <View style={styles.logoutContainer}>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={styles.content}>
           <View style={styles.topSection}>
             <View style={styles.logoContainer}>
-              <Image 
-                source={require('../../assets/images/mainAppLogo.jpg')} 
+              <Image
+                source={require('../../assets/images/mainAppLogo.jpg')}
                 style={styles.logo}
                 resizeMode="contain"
               />
             </View>
-            {(isRegistered && name) && (
-              <Text style={styles.welcomeText}>
-                {getWelcomeMessage()}
-              </Text>
-            )}       
-            <Text style={styles.description}>
-              {getDescription()}
-            </Text>
+            {isRegistered && name && <Text style={styles.welcomeText}>{getWelcomeMessage()}</Text>}
+            <Text style={styles.description}>{getDescription()}</Text>
             {isRegistered && (
-            <View style={styles.userDetailsContainer}>
-              <Text style={styles.userDetailText}>
-                First Name: {loggedInUserDetail.firstName}
-              </Text>
-              <Text style={styles.userDetailText}>
-                Last Name: {loggedInUserDetail.lastName} 
-              </Text>
-            </View>
-          )}
-          </View>      
+              <View style={styles.userDetailsContainer}>
+                <Text style={styles.userDetailText}>CNIC: {loggedInUserDetail.cnic}</Text>
+                <Text style={styles.userDetailText}>
+                  First Name: {loggedInUserDetail.firstName}
+                </Text>
+                <Text style={styles.userDetailText}>Last Name: {loggedInUserDetail.lastName}</Text>
+              </View>
+            )}
+          </View>
 
           {/* {!isRegistered && ( */}
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={[styles.button, styles.registerButton]} 
-                onPress={handleRegister}
-              >
-                <Text style={[styles.buttonText, styles.registerButtonText]}>
-                  Signup
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.button, styles.newScreenButton]} 
-                onPress={() => navigation.navigate('Login')}
-              >
-                <Text style={styles.buttonText}>
-                  Login
-                </Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.registerButton]}
+              onPress={handleRegister}>
+              <Text style={[styles.buttonText, styles.registerButtonText]}>Signup</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.newScreenButton]}
+              onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+          </View>
           {/* )} */}
         </View>
       </ScrollView>
@@ -143,7 +130,7 @@ const styles = StyleSheet.create({
   },
   logoutContainer: {
     position: 'absolute',
-    top: 60,
+    top: 30,
     right: 20,
     zIndex: 10,
   },
@@ -174,7 +161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 16,
-    paddingTop: 24
+    paddingTop: 24,
   },
   topSection: {
     justifyContent: 'center',
@@ -254,4 +241,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;
