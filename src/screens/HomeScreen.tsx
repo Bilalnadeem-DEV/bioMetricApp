@@ -33,17 +33,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     dispatch(updateLastLogin());
   }, [dispatch]);
 
-  const handleScanFingers = () => {
-    console.log('Navigating to Camera screen');
-    if (isRegistered && name) {
-      // If user is registered, go directly to ScanPrep
-      navigation.navigate('ScanPrep');
-    } else {
-      // If not registered, go to Camera for quick scan
-      navigation.navigate('Camera', {});
-    }
-  };
-
   const handleRegister = () => {
     console.log('Navigating to Register screen');
     navigation.navigate('Register');
@@ -87,7 +76,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const getDescription = () => {
     if (isRegistered && name) {
-      return 'Ready for your next biometric scan session.';
+      return 'Here are your details';
     }
     return 'Secure biometric authentication for enhanced security and seamless access control.';
   };
@@ -136,7 +125,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.button, styles.newScreenButton]} 
-              onPress={handleRegister}
+              onPress={() => navigation.navigate('Login')}
             >
               <Text style={styles.buttonText}>
                 Login

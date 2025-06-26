@@ -16,7 +16,7 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setUserName, setUserRegistered } from '../store/slices/userSlice';
+import { setUserCNIC, setUserDateOfBirth, setUserFirstName, setUserLastName, setUserName, setUserRegistered } from '../store/slices/userSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type RegisterScreenNavigationProp = StackNavigationProp<
@@ -32,10 +32,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { name: userName, isRegistered } = useAppSelector((state) => state.user);
   
-  const [cnic, setCnic] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [cnic, setCnic] = useState('5454545454545');
+  const [firstName, setFirstName] = useState('John');
+  const [lastName, setLastName] = useState('Doe');
+  const [dateOfBirth, setDateOfBirth] = useState('01/01/1990');
   const [cnicError, setCnicError] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
@@ -145,7 +145,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     }
     if (formatted.length > 13) {
       formatted = formatted.substring(0, 13) + '-' + formatted.substring(13, 14);
-    }
+    }    
     setCnic(formatted);
     if (cnicError) {
       setCnicError('');
@@ -196,9 +196,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
     // Save user data to Redux store
     dispatch(setUserName(fullName));
-    dispatch(setUserRegistered(true));
 
-    // Navigate to NewScreen instead of ScanPrep
+    dispatch(setUserCNIC(cnic));
+    dispatch(setUserFirstName(firstName));
+    dispatch(setUserLastName(lastName));
+    dispatch(setUserDateOfBirth(dateOfBirth));
+
     navigation.navigate('NewScreen');
   };
 
@@ -298,48 +301,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   maxLength={10}
                 />
                 {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
-              </View>
-
-              {/* Biometric Scan Instructions */}
-              {/* <View style={styles.instructionsContainer}>
-                <Text style={styles.instructionsTitle}>Biometric Scan Instructions</Text>
-                
-                <View style={styles.instructionItem}>
-                  <View style={styles.stepNumber}>
-                    <Text style={styles.stepNumberText}>1</Text>
-                  </View>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Position Your Hand</Text>
-                    <Text style={styles.stepDescription}>
-                      Place your 4 fingers (index, middle, ring, pinky) vertically from the side against the scanning area
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.instructionItem}>
-                  <View style={styles.stepNumber}>
-                    <Text style={styles.stepNumberText}>2</Text>
-                  </View>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Hold Steady</Text>
-                    <Text style={styles.stepDescription}>
-                      Keep your fingers straight and press gently. The system will automatically capture 3 images
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.instructionItem}>
-                  <View style={styles.stepNumber}>
-                    <Text style={styles.stepNumberText}>3</Text>
-                  </View>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Wait for Completion</Text>
-                    <Text style={styles.stepDescription}>
-                      Don't move during the capture sequence. You'll see thumbnails of each captured image
-                    </Text>
-                  </View>
-                </View>               
-              </View> */}
+              </View>           
             </View>
           </View>
         </ScrollView>

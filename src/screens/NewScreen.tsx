@@ -10,6 +10,8 @@ import {
   Alert,
   ScrollView,
   Platform,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
@@ -25,6 +27,7 @@ import {
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import RNFS from 'react-native-fs';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
+import { biometricService } from '../services/biometric.service';
 
 type NewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'NewScreen'>;
 
@@ -51,6 +54,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [fingerprintSDK, setFingerprintSDK] = useState<any>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     const loadSDK = async () => {
@@ -213,8 +217,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             const processedImages: any[] = [];
             let qualityIssues = 0;
             
-            images.forEach((imageBase64, index) => {
-              // Basic quality validation
+            images.forEach((imageBase64, index) => {              
               const imageSize = imageBase64.length;
               const estimatedQuality = imageSize > 50000 ? 'high' : imageSize > 20000 ? 'medium' : 'low';
               
@@ -488,6 +491,76 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     }
   };
 
+  const handleSendBiometric = async () => {
+    if (!capturedImages || capturedImages.length < 4) {
+      Alert.alert(
+        'Missing Fingerprints',
+        'Please capture all four fingerprints before sending for biometric registration.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      // Map captured images to their respective fingers
+      const fingerMap = {
+        index_finger: capturedImages[0]?.uri || null,
+        middle_finger: capturedImages[1]?.uri || null,
+        ring_finger: capturedImages[2]?.uri || null,
+        pinky_finger: capturedImages[3]?.uri || null,
+      };
+
+      const userData = {
+        cnic: '1231231231231',
+        first_name: 'John',
+        last_name: 'Doe',
+        date_of_birth: '1990-01-01',
+        ...fingerMap
+      };
+
+      // Start the API call
+      setIsRegistering(true);
+      const response = await biometricService.register(userData);
+      console.log('Registration response:', response);
+        
+      setIsRegistering(false);
+      Alert.alert(
+        'Success',
+        'Biometric verification completed successfully!',
+        [
+          { 
+            text: 'OK',
+            onPress: () => {
+              // Clear the biometric data
+              dispatch(clearBiometricData());
+              // Navigate to home screen
+              navigation.pop(2);
+            }
+          }
+        ]
+      );
+    } catch (error: any) {
+      setIsRegistering(false);
+      console.error('Registration failed:', error);
+      Alert.alert(
+        'Registration Error',
+        error.response?.data?.message || error.message || 'Failed to send biometric data',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const LoadingOverlay = () => (
+    <Modal transparent visible>
+      <View style={styles.overlayContainer}>
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#1E2772" />
+          <Text style={styles.loadingText}>Processing Fingerprints...</Text>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -507,7 +580,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
               resizeMode="contain"
             />
           </View>          
-          <Text style={styles.subtitle}>Secure biometric authentication</Text>
+          <Text style={styles.subtitle}>Secure biometric authentication</Text>      
         </View>
 
         <View style={styles.statusContainer}>
@@ -557,7 +630,9 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           >
             <Text style={styles.captureButtonText}>
               {!sdkLoaded 
-                ? 'Service Unavailable'               
+                ? 'Service Unavailable'
+                : capturedImages.length > 0
+                  ? 'Scan fingerprint again'
                   : 'Start Fingerprint Scan'
               }
             </Text>
@@ -574,6 +649,15 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                 </Text>
               </TouchableOpacity>
             </>
+          )}
+
+          {capturedImages && capturedImages.length > 0 && (
+            <TouchableOpacity 
+              style={[styles.button, styles.sendButton]} 
+              onPress={handleSendBiometric}
+            >
+              <Text style={styles.buttonText}>Send for bioMetric</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -619,18 +703,20 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                       Size: {Math.round(image.fileSize / 1024)}KB
                     </Text>
                   )}
-                  <TouchableOpacity 
+                  {/* <TouchableOpacity 
                     style={styles.saveImageButton}
                     onPress={() => saveImageToGallery(image.uri, image.index)}
                   >
                     <Text style={styles.saveImageButtonText}>💾 Save</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
               ))}
             </View>
           </View>
         )}      
       </ScrollView>
+      
+      {isRegistering && <LoadingOverlay />}
     </SafeAreaView>
   );
 };
@@ -999,6 +1085,93 @@ const styles = StyleSheet.create({
     color: ColorPalettes.text.light,
     fontSize: 14,
     fontWeight: '600',
+  },
+  button: {
+    backgroundColor: ColorPalettes.interactive.primary,
+    paddingVertical: 18,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.light,
+  },
+  sendButton: {
+    backgroundColor: '#1E2772',
+    marginBottom: 10,
+    marginTop: 18,
+
+  },
+  buttonText: {
+    color: ColorPalettes.text.light,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  userInfoContainer: {
+    backgroundColor: ColorPalettes.backgrounds.surface,
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.light,
+    width: '100%',
+  },
+  userInfoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: ColorPalettes.text.primary,
+    marginBottom: 15,
+  },
+  userInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  userInfoLabel: {
+    fontSize: 16,
+    color: ColorPalettes.text.secondary,
+    fontWeight: '500',
+  },
+  userInfoValue: {
+    fontSize: 16,
+    color: ColorPalettes.text.primary,
+    fontWeight: '600',
+  },
+  sendButtonDisabled: {
+    opacity: 0.7,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlayContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingBox: {
+    backgroundColor: ColorPalettes.backgrounds.surface,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: ColorPalettes.shadows.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    minWidth: 200,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: ColorPalettes.text.primary,
+    fontWeight: '500',
   },
 });
 

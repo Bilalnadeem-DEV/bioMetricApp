@@ -3,6 +3,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 interface UserState {
   CNIC: string;
   name: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
   isRegistered: boolean;
   registrationDate: string | null;
   lastLoginDate: string | null;
@@ -16,6 +19,9 @@ interface UserState {
 const initialState: UserState = {
   CNIC: '',
   name: '',
+  firstName: '',
+  lastName: '',
+  dateOfBirth: '',
   isRegistered: false,
   registrationDate: null,
   lastLoginDate: null,
@@ -48,6 +54,15 @@ const userSlice = createSlice({
     updatePreferences: (state, action: PayloadAction<Partial<UserState['preferences']>>) => {
       state.preferences = { ...state.preferences, ...action.payload };
     },
+    setUserFirstName: (state, action: PayloadAction<string>) => {
+      state.firstName = action.payload;
+    },
+    setUserLastName: (state, action: PayloadAction<string>) => {
+      state.lastName = action.payload;
+    },
+    setUserDateOfBirth: (state, action: PayloadAction<string>) => {
+      state.dateOfBirth = action.payload;
+    },
     clearUserData: (state) => {
       state.CNIC = '';
       state.name = '';
@@ -70,6 +85,9 @@ export const {
   updateLastLogin,
   updatePreferences,
   clearUserData,
+  setUserFirstName,
+  setUserLastName,
+  setUserDateOfBirth,
 } = userSlice.actions;
 
 export default userSlice.reducer; 
