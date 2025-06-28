@@ -85,7 +85,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     timeToCapture: 1,
     overlayColor: ColorPalettes.transparent.black30,
     imageQuality: {
-      compressionQuality: 90,
+      compressionQuality: 100,
       imageFormat: 'PNG',
       enableHighResolution: true,
       antiAliasing: true,
@@ -115,7 +115,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     backButton: {
       enabled: true,
       backgroundColor: ColorPalettes.transparent.clear,
-      buttonPadding: 0,
+      buttonPadding: 20,
       buttonSize: { width: 56, height: 56 },
       iconOptions: {
         enabled: true,
@@ -131,17 +131,17 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       },
     },
     helpText: {
-      enabled: false,
+      enabled: true,
       messages: {
-        leftHandMessage:
-          'Place your left hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
+        leftHandMessage: 
+          'Place your left hand (without thumb)\nuntil the marker is centered.',
         rightHandMessage:
           'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
         thumbsMessage:
           'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
       },
       textColor: ColorPalettes.text.light,
-      textSize: 16,
+      textSize: 20,      
     },
     fingerEllipse: {
       enabled: true,
@@ -153,16 +153,16 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       selectedBarColor: ColorPalettes.semantic.fingerprint,
       unselectedBarColor: ColorPalettes.text.light,
       arrowColor: ColorPalettes.semantic.fingerprint,
-      sensitivity: 'low',
+      sensitivity: 'medium',
       tooCloseText: {
-        enabled: false,
-        content: 'Too close - move hand away for better focus',
+        enabled: true,
+        content: 'Too close',
         textColor: ColorPalettes.interactive.error,
         textSize: 16,
       },
       tooFarText: {
-        enabled: false,
-        content: 'Too far - bring hand closer for sharp capture',
+        enabled: true,
+        content: 'Too far',
         textColor: ColorPalettes.interactive.error,
         textSize: 16,
       },
@@ -175,7 +175,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     },
     motionDetection: {
       enabled: true,
-      sensitivity: 'medium',
+      sensitivity: 'low',
       stabilizationTime: 1,
       motionThreshold: 1.0,
     },
@@ -528,7 +528,10 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
       // Start the API call
       setIsRegistering(true);
-      const response = await biometricService.register(userData);
+      console.log('userDatauserData:', userData);
+      // const response = await biometricService.register(userData);
+      const response = await biometricService.registerBiometric(userData);
+      
       console.log('Registration response:', response);
       if (response.user_data) {
         dispatch(
