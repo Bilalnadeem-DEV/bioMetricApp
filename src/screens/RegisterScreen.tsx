@@ -32,11 +32,6 @@ interface Props {
 const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { name: userName, isRegistered } = useAppSelector((state) => state.user);
-  
-  // const [cnic, setCnic] = useState('5454545454545');
-  // const [firstName, setFirstName] = useState('John');
-  // const [lastName, setLastName] = useState('Doe');
-  // const [dateOfBirth, setDateOfBirth] = useState('01/01/1990');
 
   const [cnic, setCnic] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -217,7 +212,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     dispatch(setUserName(`${firstName} ${lastName}`));
     dispatch(setUserCNIC(cnic.replace(/\D/g, '')));
     dispatch(setUserFirstName(firstName))
-    dispatch(setUserLastName(firstName))    
+    dispatch(setUserLastName(lastName))
+    dispatch(setUserDateOfBirth(dateOfBirth))
     
     // Navigate to BiometricLogin after successful registration
     navigation.navigate('NewScreen');

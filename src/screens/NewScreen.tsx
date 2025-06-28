@@ -29,6 +29,7 @@ import RNFS from 'react-native-fs';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 import { biometricService } from '../services/biometric.service';
 import { setLoggedInUserDetail, setUserRegistered } from '../store/slices/userSlice';
+import Toast from 'react-native-toast-message';
 
 type NewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'NewScreen'>;
 
@@ -499,6 +500,12 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     }
   };
 
+  function convertToISODate(dateStr: string) {
+    const [day, month, year] = dateStr.split('/');
+    if (!day || !month || !year) return '';
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
   const handleSendBiometric = async () => {
     if (!capturedImages || capturedImages.length < 4) {
       Alert.alert(
@@ -522,28 +529,31 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         cnic: CNIC,
         first_name: firstName,
         last_name: lastName,
-        date_of_birth: '1990-01-01',
+        date_of_birth:  convertToISODate(dateOfBirth),
+        // date_of_birth:  convertToISODate(dateOfBirth) '1990-01-01',
         ...fingerMap,
       };
-
+      console.log('userDatauserData:', userData);      
       // Start the API call
-      setIsRegistering(true);
-      console.log('userDatauserData:', userData);
+      setIsRegistering(true);      
       // const response = await biometricService.register(userData);
       const response = await biometricService.registerBiometric(userData);
       
       console.log('Registration response:', response);
+
+
       if (response.user_data) {
         dispatch(
           setLoggedInUserDetail({
             firstName: response.user_data.first_name,
             lastName: response.user_data.last_name,
             cnic: response.user_data.cnic,
+            dateOfBirth: response.user_data.date_of_birth,
           }),
         );
       }
       setIsRegistering(false);
-      Alert.alert('Success', 'Biometric verification completed successfully!', [
+        Alert.alert('Success', 'Biometric verification completed successfully!', [
         {
           text: 'OK',
           onPress: () => {
@@ -555,6 +565,21 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           },
         },
       ]);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Biometric verification completed successfully!',
+        position: 'top',
+        visibilityTime: 3000,
+        text1Style: {
+          fontSize: 20,
+          fontWeight: 'bold',
+        },
+        text2Style: {
+          fontSize: 16,
+        },
+      });      
+  
     } catch (error: any) {
       setIsRegistering(false);
       console.error('Registration failed:', error);

@@ -19,6 +19,7 @@ interface UserState {
     firstName: string;
     lastName: string;
     cnic: string;
+    dateOfBirth: string;
   }
 }
 
@@ -40,6 +41,7 @@ const initialState: UserState = {
     firstName: '',
     lastName: '',
     cnic: '',
+    dateOfBirth: '',
   }
 };
 
@@ -56,7 +58,7 @@ const userSlice = createSlice({
     setUserRegistered: (state, action: PayloadAction<boolean>) => {
       state.isRegistered = action.payload;     
     },
-    setLoggedInUserDetail: (state, action: PayloadAction<{ firstName: string; lastName: string; cnic: string }>) => {
+    setLoggedInUserDetail: (state, action: PayloadAction<{ firstName: string; lastName: string; cnic: string; dateOfBirth: string }>) => {
       state.loggedInUserDetail = action.payload;
       state.isRegistered = true
     },
@@ -65,6 +67,7 @@ const userSlice = createSlice({
         firstName: '',
         lastName: '',
         cnic: '',
+        dateOfBirth: '',
       };
       state.isRegistered = false
     },

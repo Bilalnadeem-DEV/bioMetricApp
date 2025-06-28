@@ -88,11 +88,22 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <Text style={styles.description}>{getDescription()}</Text>
             {isRegistered && (
               <View style={styles.userDetailsContainer}>
-                <Text style={styles.userDetailText}>CNIC: {loggedInUserDetail.cnic}</Text>
                 <Text style={styles.userDetailText}>
-                  First Name: {loggedInUserDetail.firstName}
+                  <Text style={styles.labelText}>CNIC: </Text>
+                  {loggedInUserDetail.cnic}
                 </Text>
-                <Text style={styles.userDetailText}>Last Name: {loggedInUserDetail.lastName}</Text>
+                <Text style={styles.userDetailText}>
+                  <Text style={styles.labelText}>First Name: </Text>
+                  {loggedInUserDetail.firstName}
+                </Text>
+                <Text style={styles.userDetailText}>
+                  <Text style={styles.labelText}>Last Name: </Text>
+                  {loggedInUserDetail.lastName}
+                </Text>
+                <Text style={styles.userDetailText}>
+                  <Text style={styles.labelText}>Date of Birth: </Text>
+                  {loggedInUserDetail.dateOfBirth}
+                </Text>
               </View>
             )}
           </View>
@@ -235,9 +246,12 @@ const styles = StyleSheet.create({
   },
   userDetailText: {
     fontSize: 16,
+    marginBottom: 16,
     color: ColorPalettes.text.primary,
-    marginBottom: 8,
-    fontWeight: '500',
+  },
+  labelText: {
+    fontWeight: 'bold',
+    color: ColorPalettes.text.secondary,
   },
 });
 
