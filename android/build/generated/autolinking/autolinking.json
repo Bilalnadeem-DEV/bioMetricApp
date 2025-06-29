@@ -804,9 +804,7 @@
     "ios": {},
     "android": {}
   },
-  "assets": [
-    "./assets/images/"
-  ],
+  "assets": [],
   "project": {
     "ios": {
       "sourceDir": "/Users/bilal/Desktop/MU/jazz-bio-metric-app/repo/bioMetricApp/ios",
@@ -815,7 +813,6 @@
         "path": ".",
         "isWorkspace": true
       },
-      "automaticPodsInstallation": true,
       "assets": []
     },
     "android": {
