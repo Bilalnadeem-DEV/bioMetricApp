@@ -13,7 +13,9 @@ import {
   ScrollView,
   Platform,
   Keyboard,
+  Modal,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -37,6 +39,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date(1990, 0, 1));
   const [cnicError, setCnicError] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
@@ -121,34 +125,29 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     return true;
   };
 
-  const validateDateOfBirth = (inputDate: string): boolean => {
-    const trimmedDate = inputDate.trim();
-    
-    if (!trimmedDate) {
-      setDobError('Date of birth is required');
-      return false;
+  const formatDate = (date: Date): string => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const handleDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
     }
     
-    // Basic date format validation (DD/MM/YYYY)
-    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-    const match = trimmedDate.match(dateRegex);
-    
-    if (!match) {
-      setDobError('Date must be in DD/MM/YYYY format');
-      return false;
+    if (date) {
+      setSelectedDate(date);
+      const formattedDate = formatDate(date);
+      setDateOfBirth(formattedDate);
+      setDobError('');
     }
-    
-    const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10);
-    const year = parseInt(match[3], 10);
-    
-    if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
-      setDobError('Please enter a valid date');
-      return false;
-    }
-    
-    setDobError('');
-    return true;
+  };
+
+  const showDatePickerModal = () => {
+    Keyboard.dismiss();
+    setShowDatePicker(true);
   };
 
   const handleCnicChange = (value: string) => {    
@@ -179,19 +178,33 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleDateOfBirthChange = (value: string) => {
-    // Format date as user types (DD/MM/YYYY)
-    let formatted = value.replace(/\D/g, '');
-    if (formatted.length > 2) {
-      formatted = formatted.substring(0, 2) + '/' + formatted.substring(2);
+  const validateDateOfBirth = (inputDate: string): boolean => {
+    if (!inputDate) {
+      setDobError('Date of birth is required');
+      return false;
     }
-    if (formatted.length > 5) {
-      formatted = formatted.substring(0, 5) + '/' + formatted.substring(5, 9);
+
+    const date = new Date(selectedDate);
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const monthDiff = today.getMonth() - date.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+      age--;
     }
-    setDateOfBirth(formatted);
-    if (dobError) {
-      setDobError('');
+
+    if (age < 18) {
+      setDobError('Must be at least 18 years old');
+      return false;
     }
+
+    if (age > 150) {
+      setDobError('Invalid age');
+      return false;
+    }
+
+    setDobError('');
+    return true;
   };
 
   const handleRegister = async () => {
@@ -320,18 +333,73 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Date of Birth</Text>
-                <TextInput
+                <TouchableOpacity 
                   style={[styles.input, dobError ? styles.inputError : null]}
-                  placeholder="DD/MM/YYYY"
-                  placeholderTextColor={ColorPalettes.text.muted}
-                  value={dateOfBirth}
-                  onChangeText={handleDateOfBirthChange}
-                  onBlur={() => validateDateOfBirth(dateOfBirth)}
-                  keyboardType="numeric"
-                  maxLength={10}
-                />
+                  onPress={showDatePickerModal}
+                >
+                  <Text style={[
+                    styles.dateText,
+                    !dateOfBirth && styles.placeholderText
+                  ]}>
+                    {dateOfBirth || 'Date of Birth (DD/MM/YYYY)'}
+                  </Text>
+                </TouchableOpacity>
                 {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
-              </View>           
+              </View>
+
+              {/* Date Picker for iOS */}
+              {Platform.OS === 'ios' && showDatePicker && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  visible={showDatePicker}
+                >
+                  <View style={styles.modalContainer}>
+                    <View style={styles.pickerContainer}>
+                      <View style={[{width: '100%', height: 18, backgroundColor: 'gray', alignItems: 'center', justifyContent: 'center', borderTopStartRadius : 100, borderTopEndRadius : 100}]}>
+                        <View style={[{width: 40, height: 8, backgroundColor: 'white', borderRadius: 100}]}></View>
+                      </View>
+                      <View style={styles.pickerHeader}>
+                        <TouchableOpacity
+                          onPress={() => setShowDatePicker(false)}
+                          style={styles.pickerButton}
+                        >
+                          <Text style={styles.pickerButtonText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            handleDateChange(null, selectedDate);
+                            setShowDatePicker(false);
+                          }}
+                          style={styles.pickerButton}
+                        >
+                          <Text style={[styles.pickerButtonText, styles.doneButton]}>Done</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <DateTimePicker
+                        value={selectedDate}
+                        mode="date"
+                        display="spinner"
+                        onChange={handleDateChange}
+                        maximumDate={new Date()}
+                        minimumDate={new Date(1900, 0, 1)}
+                      />
+                    </View>
+                  </View>
+                </Modal>
+              )}
+
+              {/* Date Picker for Android */}
+              {Platform.OS === 'android' && showDatePicker && (
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1900, 0, 1)}
+                />
+              )}
             </View>
           </View>
         </ScrollView>
@@ -579,6 +647,45 @@ const styles = StyleSheet.create({
     color: ColorPalettes.text.light,
     fontSize: 18,
     fontWeight: '600',
+  },
+  dateText: {
+    fontSize: 16,
+    color: ColorPalettes.text.primary,
+    padding: 12,
+  },
+  placeholderText: {
+    color: ColorPalettes.text.muted,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    // backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  pickerContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+  },
+  pickerHeader: {    
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: ColorPalettes.borders.light,
+  },
+  pickerButton: {
+    padding: 8,
+  },
+  pickerButtonText: {
+    fontSize: 20,
+    color: 'red',
+  },
+  doneButton: {
+    fontWeight: '600',
+    fontSize: 20,
+    color: '#1E2772',
   },
 });
 

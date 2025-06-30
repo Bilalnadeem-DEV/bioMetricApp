@@ -504,9 +504,52 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   };
 
   function convertToISODate(dateStr: string) {
-    const [day, month, year] = dateStr.split('/');
-    if (!day || !month || !year) return '';
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    // Check if the date string matches the expected format (DD/MM/YYYY)
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    if (!dateRegex.test(dateStr)) {
+      throw new Error('Invalid date format. Please use DD/MM/YYYY format.');
+    }
+
+    const [day, month, year] = dateStr.split('/').map(Number);
+
+    // Validate year
+    const currentYear = new Date().getFullYear();
+    if (year < 1900 || year > currentYear) {
+      throw new Error(`Year must be between 1900 and ${currentYear}`);
+    }
+
+    // Validate month
+    if (month < 1 || month > 12) {
+      throw new Error('Month must be between 1 and 12');
+    }
+
+    // Validate day based on month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day < 1 || day > daysInMonth) {
+      throw new Error(`Invalid day for the selected month. Day must be between 1 and ${daysInMonth}`);
+    }
+
+    // Check if the date is not in the future
+    const inputDate = new Date(year, month - 1, day);
+    if (inputDate > new Date()) {
+      throw new Error('Date of birth cannot be in the future');
+    }
+
+    // Calculate age
+    const age = currentYear - year - 
+      (new Date().getMonth() < month - 1 || 
+       (new Date().getMonth() === month - 1 && new Date().getDate() < day) ? 1 : 0);
+
+    // Validate minimum and maximum age
+    if (age < 18) {
+      throw new Error('Must be at least 18 years old');
+    }
+    if (age > 150) {
+      throw new Error('Invalid age: Exceeds maximum allowed age');
+    }
+
+    // Format the date as YYYY-MM-DD
+    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
 
   const handleSendBiometric = async () => {
@@ -520,6 +563,19 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     }
 
     try {
+      // Validate date of birth first
+      let formattedDOB;
+      try {
+        formattedDOB = convertToISODate(dateOfBirth);
+      } catch (error) {
+        Alert.alert(
+          'Invalid Date of Birth',
+          error instanceof Error ? error.message : 'Invalid date format',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       // Map captured images to their respective fingers
       const fingerMap = {
         index_finger: capturedImages[0]?.uri || null,
@@ -532,8 +588,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         cnic: CNIC,
         first_name: firstName,
         last_name: lastName,
-        date_of_birth:  convertToISODate(dateOfBirth),
-        // date_of_birth:  convertToISODate(dateOfBirth) '1990-01-01',
+        date_of_birth: formattedDOB,
         ...fingerMap,
       };
       console.log('userDatauserData:', userData);      
@@ -747,12 +802,12 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                       Size: {Math.round(image.fileSize / 1024)}KB
                     </Text>
                   )}
-                  {/* <TouchableOpacity 
+                  <TouchableOpacity 
                     style={styles.saveImageButton}
                     onPress={() => saveImageToGallery(image.uri, image.index)}
                   >
                     <Text style={styles.saveImageButtonText}>💾 Save</Text>
-                  </TouchableOpacity> */}
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
