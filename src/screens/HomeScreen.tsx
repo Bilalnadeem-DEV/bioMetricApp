@@ -86,6 +86,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
             {isRegistered && name && <Text style={styles.welcomeText}>{getWelcomeMessage()}</Text>}
             <Text style={styles.description}>{getDescription()}</Text>
+            {!isRegistered && (
+              <View style={styles.infoContainer}>
+                <Text style={styles.infoText}>
+                  <Text style={styles.infoHighlight}>Note: </Text>
+                  If you haven't registered yet, please click on Signup before attempting to login.
+                </Text>
+              </View>
+            )}
             {isRegistered && (
               <View style={styles.userDetailsContainer}>
                 <Text style={styles.userDetailText}>
@@ -250,6 +258,25 @@ const styles = StyleSheet.create({
     color: ColorPalettes.text.primary,
   },
   labelText: {
+    fontWeight: 'bold',
+    color: ColorPalettes.text.secondary,
+  },
+  infoContainer: {
+    width: '100%',
+    backgroundColor: ColorPalettes.backgrounds.secondary,
+    borderRadius: 12,
+    padding: 20,
+    marginVertical: 20,
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.light,
+  },
+  infoText: {
+    fontSize: 18,
+    color: ColorPalettes.text.primary,
+    lineHeight: 24,
+  },
+  infoHighlight: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: ColorPalettes.text.secondary,
   },

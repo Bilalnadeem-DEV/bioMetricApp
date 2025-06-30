@@ -12,6 +12,7 @@ import {
   Platform,
   ActivityIndicator,
   Modal,
+  Dimensions,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../App';
@@ -58,8 +59,10 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const [fingerprintSDK, setFingerprintSDK] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const { CNIC, name, firstName, lastName, dateOfBirth } = useAppSelector(state => state.user);
+  const [showInstructions, setShowInstructions] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => {     
+    setShowInstructions(true)   
     const loadSDK = async () => {
       try {
         const sdk = await import('@biopassid/fingerprint-sdk-react-native');
@@ -602,9 +605,43 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     </Modal>
   );
 
+  const InstructionsModal = () => (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={showInstructions}
+      onRequestClose={() => setShowInstructions(false)}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowInstructions(false)}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.instructionsHeader}>
+            <Text style={styles.instructionText}>• Use your left hand</Text>
+            <Text style={styles.instructionText}>• Use good lighting conditions</Text>
+          </View>
+          <Image
+            source={require('../../assets/images/hyper-i-instructions-2.png')}
+            style={styles.instructionImage}
+            resizeMode="contain"
+          />
+          <TouchableOpacity 
+            style={styles.dismissButton}
+            onPress={() => setShowInstructions(false)}
+          >
+            <Text style={styles.dismissButtonText}>TAP TO DISMISS</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
+      {InstructionsModal()}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -666,17 +703,9 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                 : 'Start Fingerprint Scan'}
             </Text>
           </TouchableOpacity>
-
-          {capturedImages && capturedImages.length > 0 && (
-            <TouchableOpacity
-              style={[styles.button, styles.sendButton]}
-              onPress={handleSendBiometric}>
-              <Text style={styles.buttonText}>Send for bioMetric</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
-        {/* {capturedImages.length > 0 && (
+        {capturedImages.length > 0 && (
           <View style={styles.resultsContainer}>
             <Text style={styles.resultsTitle}>Captured Fingerprints:</Text>
             <Text style={styles.reduxInfo}>
@@ -718,23 +747,35 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                       Size: {Math.round(image.fileSize / 1024)}KB
                     </Text>
                   )}
-                  <TouchableOpacity 
+                  {/* <TouchableOpacity 
                     style={styles.saveImageButton}
                     onPress={() => saveImageToGallery(image.uri, image.index)}
                   >
                     <Text style={styles.saveImageButtonText}>💾 Save</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
               ))}
             </View>
           </View>
-        )}       */}
+        )}      
       </ScrollView>
+
+      {capturedImages && capturedImages.length > 0 && (
+        <View style={styles.stickyButtonContainer}>
+          <TouchableOpacity
+            style={[styles.button, styles.sendButton]}
+            onPress={handleSendBiometric}>
+            <Text style={styles.buttonText}>Send for bioMetric</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {isRegistering && <LoadingOverlay />}
     </SafeAreaView>
   );
 };
+
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -747,6 +788,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingVertical: 20,
+    paddingBottom: 100,
   },
   header: {
     alignItems: 'center',
@@ -1186,6 +1228,85 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: ColorPalettes.text.primary,
     fontWeight: '500',
+  },
+  stickyButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: ColorPalettes.backgrounds.primary,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    // borderTopWidth: 1,
+    borderTopColor: ColorPalettes.borders.light,
+    shadowColor: ColorPalettes.shadows.primary,
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: width,
+    height: height,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  instructionImage: {
+    marginTop: 40,
+    width: width,
+    height: height * 0.9,
+  },
+  modalText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    marginTop: 20,    
+    textAlign: 'center',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  instructionsHeader: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    zIndex: 1,
+  },
+  instructionText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    marginBottom: 10,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  dismissButton: {
+    position: 'absolute',
+    bottom: 0,
+    left: 20,
+    right: 20,
+    backgroundColor: '#1E2772',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    marginTop: 20,
+    marginBottom: 48,
+  },
+  dismissButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
