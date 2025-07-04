@@ -94,6 +94,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </Text>
               </View>
             )}
+
+            {isRegistered && (
+              <View style={styles.buttonContainer}>
+                <Text
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 'bold',
+                    color: ColorPalettes.interactive.error,
+                    textAlign: 'center',
+                    marginVertical: 15,
+                    paddingHorizontal: 20,
+                  }}>
+                  ⚠️ Your account verification is incomplete. Please verify your identity by
+                  scanning your ID card.
+                </Text>
+              </View>
+            )}
             {isRegistered && (
               <View style={styles.userDetailsContainer}>
                 <Text style={styles.userDetailText}>
@@ -115,23 +132,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </View>
             )}
           </View>
-
-          {/* {!isRegistered && ( */}
-          {
-            !isRegistered && <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.registerButton]}
-              onPress={handleRegister}>
-              <Text style={[styles.buttonText, styles.registerButtonText]}>Signup</Text>
-            </TouchableOpacity>
+          
+          {!isRegistered ? (
+          // {false ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.registerButton]}
+                onPress={handleRegister}>
+                <Text style={[styles.buttonText, styles.registerButtonText]}>Signup</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.newScreenButton]}
+                onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.buttonText}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <TouchableOpacity
               style={[styles.button, styles.newScreenButton]}
-              onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.buttonText}>Login</Text>
+              onPress={() => navigation.navigate('ScanPrep')}>
+              <Text style={styles.buttonText}>CNIC Verification</Text>
             </TouchableOpacity>
-          </View>
-          }
-                    
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -15,13 +15,13 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { 
-  setCameraPermission, 
-  setStoragePermission, 
-  setIsScanning, 
-  setError, 
+import {
+  setCameraPermission,
+  setStoragePermission,
+  setIsScanning,
+  setError,
   clearError,
-  addCapturedImage 
+  addCapturedImage,
 } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
@@ -37,46 +37,42 @@ const { width, height } = Dimensions.get('window');
 
 const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
-  const { 
-    cameraPermission, 
-    storagePermission, 
-    isScanning, 
-    error,
-    currentSession 
-  } = useAppSelector((state) => state.biometric);
-  
+  const { cameraPermission, storagePermission, isScanning, error, currentSession } = useAppSelector(
+    state => state.biometric,
+  );
+
   const [hasPermission, setHasPermission] = useState(cameraPermission === 'granted');
   const [isFocusing, setIsFocusing] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const camera = useRef<Camera>(null);
   const devices = useCameraDevices();
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  
+
   const { imageIndex = 0, onImageCaptured } = route.params || {};
-  
+
   // Find the back camera
-  const device = devices.find(d => d.position === 'back') || devices[0];
+  const deviceBack = devices.find(d => d.position === 'back') || devices[0];
+  const deviceFront = devices.find(d => d.position === 'front') || devices[0];
 
   useEffect(() => {
     const requestPermission = async () => {
       try {
         const permission = await Camera.requestCameraPermission();
         const hasCamera = permission === 'granted';
-        
+
         setHasPermission(hasCamera);
         dispatch(setCameraPermission(permission));
-        
+
         if (!hasCamera) {
           dispatch(setError('Camera permission is required for biometric scanning'));
           Alert.alert('Camera Permission', 'Camera permission is required for biometric scanning.');
           navigation.goBack();
           return;
         }
-        
+
         // Clear any previous errors
         dispatch(clearError());
         dispatch(setIsScanning(true));
-        
       } catch (error) {
         console.error('Error requesting camera permission:', error);
         dispatch(setError('Failed to request camera permission'));
@@ -84,7 +80,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         navigation.goBack();
       }
     };
-    
+
     if (cameraPermission === 'not_requested') {
       requestPermission();
     } else {
@@ -116,10 +112,10 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           duration: 2000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     pulseAnimation.start();
-    
+
     return () => {
       pulseAnimation.stop();
       pulseAnimation.reset();
@@ -129,13 +125,13 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   const capturePhoto = async () => {
     if (camera.current && !isFocusing && !isCapturing) {
       let captureTimeout: NodeJS.Timeout | null = null;
-      
+
       try {
         console.log(`Capturing image ${imageIndex + 1}...`);
         setIsCapturing(true);
         setIsFocusing(true);
         dispatch(clearError());
-        
+
         // Set a timeout to prevent indefinite hanging
         captureTimeout = setTimeout(() => {
           setIsFocusing(false);
@@ -143,44 +139,42 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           console.error('Capture operation timed out');
           dispatch(setError('Capture operation timed out. Please try again.'));
         }, 15000); // 15 second timeout
-        
+
         // Focus on the fingerprint area
         const fingerprintFocusPoint = { x: 0.5, y: 0.6 };
-        
+
         try {
           await Promise.race([
             camera.current.focus(fingerprintFocusPoint),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Focus timeout')), 5000)
-            )
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Focus timeout')), 5000)),
           ]);
           console.log('Focus successful on fingerprint area');
         } catch (focusError) {
           console.log('Focus failed:', focusError);
           // Continue without focus if it fails
         }
-        
+
         // Wait for focus to stabilize
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         const photo = await Promise.race([
           camera.current.takePhoto({
             enableShutterSound: false,
           }),
-          new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Photo capture timeout')), 10000)
-          )
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Photo capture timeout')), 10000),
+          ),
         ]);
-        
+
         // Clear the timeout since capture was successful
         if (captureTimeout) {
           clearTimeout(captureTimeout);
           captureTimeout = null;
         }
-        
+
         const imageUri = `file://${photo.path}`;
         console.log('Image captured:', imageUri);
-        
+
         // Zoom animation after capture
         const zoomAnimation = Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -195,17 +189,17 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           }),
         ]);
         zoomAnimation.start();
-        
+
         // Save image to gallery with timeout protection
         try {
           await Promise.race([
             CameraRoll.saveAsset(imageUri, {
               type: 'photo',
-              album: 'hyperI Scans'
+              album: 'hyperI Scans',
             }),
-            new Promise<never>((_, reject) => 
-              setTimeout(() => reject(new Error('Save timeout')), 8000)
-            )
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Save timeout')), 8000),
+            ),
           ]);
           dispatch(setStoragePermission('granted'));
         } catch (saveError) {
@@ -213,52 +207,57 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           dispatch(setStoragePermission('denied'));
           dispatch(setError('Failed to save image to gallery'));
         }
-        
+
         // Get image dimensions for Redux store with timeout
         const imageSize = await Promise.race([
-          new Promise<{width: number, height: number}>((resolve) => {
-            require('react-native').Image.getSize(imageUri, (width: number, height: number) => {
-              resolve({ width, height });
-            }, () => {
-              resolve({ width: 0, height: 0 });
-            });
+          new Promise<{ width: number; height: number }>(resolve => {
+            require('react-native').Image.getSize(
+              imageUri,
+              (width: number, height: number) => {
+                resolve({ width, height });
+              },
+              () => {
+                resolve({ width: 0, height: 0 });
+              },
+            );
           }),
-          new Promise<{width: number, height: number}>((resolve) => 
-            setTimeout(() => resolve({ width: 0, height: 0 }), 3000)
-          )
+          new Promise<{ width: number; height: number }>(resolve =>
+            setTimeout(() => resolve({ width: 0, height: 0 }), 3000),
+          ),
         ]);
-        
+
         // Add to Redux store
-        dispatch(addCapturedImage({
-          uri: imageUri,
-          index: imageIndex,
-          quality: 'high',
-          size: imageSize,
-        }));
-        
+        dispatch(
+          addCapturedImage({
+            uri: imageUri,
+            index: imageIndex,
+            quality: 'high',
+            size: imageSize,
+          }),
+        );
+
         setIsFocusing(false);
         setIsCapturing(false);
-        
+
         // Call the callback if provided
         if (onImageCaptured) {
           onImageCaptured(imageUri, imageIndex);
         }
-        
+
         console.log('Image captured and saved successfully');
-        
+
         // Navigate back to previous screen after a brief delay to show the zoom effect
         setTimeout(() => {
           navigation.goBack();
         }, 600);
-        
       } catch (error) {
         console.error('Error capturing image:', error);
-        
+
         // Clear timeout if it exists
         if (captureTimeout) {
           clearTimeout(captureTimeout);
         }
-        
+
         setIsFocusing(false);
         setIsCapturing(false);
         dispatch(setError('Failed to capture biometric scan. Please try again.'));
@@ -272,12 +271,14 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     navigation.goBack();
   };
 
-  if (!hasPermission || !device) {
+  if (!hasPermission || !deviceBack) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
         <Text style={styles.errorText}>
-          {!hasPermission ? 'Camera permission required for biometric scanning' : 'No camera device found'}
+          {!hasPermission
+            ? 'Camera permission required for biometric scanning'
+            : 'No camera device found'}
         </Text>
         <TouchableOpacity style={styles.backButton} onPress={closeCamera}>
           <Text style={styles.backButtonText}>Go Back</Text>
@@ -292,12 +293,12 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
       <Camera
         ref={camera}
         style={styles.camera}
-        device={device}
+        device={imageIndex < 2 ? deviceBack : deviceFront}
         isActive={true}
         photo={true}
-        torch='on'
+        // torch='on'
       />
-      
+
       {/* Camera Overlay */}
       <View style={styles.cameraOverlay}>
         {/* Top Section */}
@@ -310,52 +311,73 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         </View>
 
         <Text style={styles.instructionText}>
-            {isCapturing 
-              ? 'Capturing image...' 
-              : isFocusing 
-                ? 'Focusing camera...' 
-                : 'Place 4 fingers vertically from the side'}
-          </Text>
+          {isCapturing
+            ? 'Capturing image...'
+            : isFocusing
+            ? 'Focusing camera...'
+            : imageIndex === 0
+            ? 'Place the front of your ID card in the frame'
+            : imageIndex === 1
+            ? 'Place the back side of your CNIC in the frame'
+            : 'Position your face clearly in the frame for a selfie'}
+        </Text>
 
         {/* Center Section - Multi-Finger Guide */}
         <View style={styles.centerSection}>
-          <Animated.View 
-            style={[
-              styles.fingerprintGuide,
-              { transform: [{ scale: pulseAnim }] }
-            ]}
-          >
-            <View style={styles.multiFingerprintFrame}>
-              <View style={styles.fingerSlots}>
-                <View style={styles.fingerSlot}>
-                  {/* <View style={styles.innerCircle} /> */}
-                </View>
-                <View style={styles.fingerSlot}>
-                  {/* <View style={styles.innerCircle} /> */}
-                </View>
-                <View style={styles.fingerSlot}>
-                  {/* <View style={styles.innerCircle} /> */}
-                </View>
-                <View style={styles.fingerSlot}>
-                  {/* <View style={styles.innerCircle} /> */}
+          {imageIndex === 2 ? (
+            // Selfie overlay
+            <View style={styles.selfieOverlay}>
+              <View style={styles.faceFrame}>
+                <View style={styles.faceFrameInner}>
+                  {/* Face outline */}
+                  <View style={styles.faceOutline} />
+                  
+                  {/* Eye guides */}
+                  <View style={styles.eyeGuides}>
+                    <View style={styles.eyeGuide} />
+                    <View style={styles.eyeGuide} />
+                  </View>
+                  
+                  {/* Nose guide */}
+                  <View style={styles.noseGuide} />
+                  
+                  {/* Mouth guide */}
+                  <View style={styles.mouthGuide} />
                 </View>
               </View>
-              <Text style={styles.fingerprintText}>SIDE SCAN</Text>
+              <Text style={styles.selfieInstructionText}>
+                Position your face within the oval frame
+              </Text>
             </View>
-          </Animated.View>
+          ) : (
+            // ID card overlay
+            <View style={styles.frameOverlay1}>
+              <View
+                style={[
+                  {
+                    width: '100%',
+                    height: 5,
+                    backgroundColor: 'black',
+                    position: 'absolute',
+                    bottom: 40,
+                  },
+                ]}
+              />
+              <Text style={styles.frameOverlayText}>Place your ID card in the frame</Text>
+            </View>
+          )}
         </View>
 
         {/* Bottom Section - Controls */}
         <View style={styles.bottomSection}>
           <View style={styles.captureArea}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
                 styles.captureButton,
-                (isFocusing || isCapturing) && styles.captureButtonDisabled
-              ]} 
+                (isFocusing || isCapturing) && styles.captureButtonDisabled,
+              ]}
               onPress={capturePhoto}
-              disabled={isFocusing || isCapturing}
-            >
+              disabled={isFocusing || isCapturing}>
               <View style={styles.captureButtonInner}>
                 {/* Removed isCapturing indicator for cleaner design */}
               </View>
@@ -370,13 +392,13 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: ColorPalettes.backgrounds.overlayDark,
+    backgroundColor: ColorPalettes.transparent.black10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   cameraContainer: {
     flex: 1,
-    backgroundColor: ColorPalettes.backgrounds.overlayDark,
+    backgroundColor: ColorPalettes.transparent.black10,
   },
   camera: {
     flex: 1,
@@ -386,8 +408,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: ColorPalettes.transparent.black30,
+    bottom: 0,    
   },
   topSection: {
     flexDirection: 'row',
@@ -416,7 +437,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: ColorPalettes.text.light,
-    backgroundColor: ColorPalettes.semantic.camera + '80',
+    backgroundColor: ColorPalettes.transparent.black30 + '80',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -426,16 +447,17 @@ const styles = StyleSheet.create({
     width: 40,
   },
   instructionText: {
-    fontSize: 16,
+    fontSize: 22,
     color: ColorPalettes.text.light,
     textAlign: 'center',
     fontWeight: '500',
-    backgroundColor: ColorPalettes.transparent.black20,
+    backgroundColor: 'black',
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginHorizontal: 20,
     borderRadius: 8,
     marginBottom: 20,
+    lineHeight: 30,
   },
   centerSection: {
     flex: 1,
@@ -447,48 +469,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  multiFingerprintFrame: {
-    width: 320,
-    height: 550,
-    borderWidth: 3,
-    borderColor: ColorPalettes.semantic.camera,
+  frameOverlay1: {
+    width: width - 10,
+    height: 300,
+    borderWidth: 5,
+    borderColor: 'black',
     borderRadius: 20,
-    backgroundColor: ColorPalettes.semantic.camera + '1A',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-  fingerSlots: {
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  fingerSlot: {
-    width: 190,
-    height: 90,
-    borderWidth: 2,
-    borderColor: ColorPalettes.borders.light,
-    borderRadius: 45,
-    backgroundColor: ColorPalettes.borders.light + '1A',
-    marginVertical: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  innerCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: ColorPalettes.text.disabled,
-    backgroundColor: ColorPalettes.text.disabled + '33',
-  },
-  fingerprintText: {
+  frameOverlayText: {
     position: 'absolute',
-    bottom: 15,
-    fontSize: 14,
+    bottom: 2,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: ColorPalettes.semantic.camera,
+    color: '#D1384A',
     letterSpacing: 1,
+    textAlign: 'center',
+    backgroundColor: ColorPalettes.transparent.black30,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   bottomSection: {
     paddingBottom: 32,
@@ -502,7 +504,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: ColorPalettes.semantic.camera,
+    backgroundColor: ColorPalettes.transparent.black30,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: ColorPalettes.semantic.camera,
@@ -546,6 +548,84 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  selfieOverlay: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  faceFrame: {
+    width: 320,
+    height: 400,
+    borderWidth: 3,
+    borderColor: '#1E2772',
+    borderRadius: 160,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 39, 114, 0.1)',
+  },
+  faceFrameInner: {
+    width: '90%',
+    height: '90%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  faceOutline: {
+    width: '100%',
+    height: '100%',
+    borderWidth: 2,
+    borderColor: '#1E2772',
+    borderRadius: 110,
+    borderStyle: 'dashed',
+  },
+  eyeGuides: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '60%',
+    position: 'absolute',
+    top: '30%',
+  },
+  eyeGuide: {
+    // width: 12,
+    // height: 12,
+    // borderWidth: 2,
+    // borderColor: '#1E2772',
+    // borderRadius: 6,
+    // backgroundColor: 'rgba(30, 39, 114, 0.3)',
+  },
+  noseGuide: {
+    width: 8,
+    height: 56,
+    borderWidth: 2,
+    borderColor: '#1E2772',
+    borderRadius: 4,
+    position: 'absolute',
+    top: '45%',
+    backgroundColor: 'rgba(30, 39, 114, 0.3)',
+  },
+  mouthGuide: {
+    // width: 30,
+    // height: 12,
+    // borderWidth: 2,
+    // borderColor: '#1E2772',
+    // borderRadius: 15,
+    // position: 'absolute',
+    // top: '65%',
+    // backgroundColor: 'rgba(30, 39, 114, 0.3)',
+  },
+  selfieInstructionText: {
+    fontSize: 16,
+    color: ColorPalettes.text.light,
+    textAlign: 'center',
+    fontWeight: '600',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 20,
+    lineHeight: 22,
+  },
 });
 
-export default CameraScreen; 
+export default CameraScreen;

@@ -11,12 +11,53 @@ interface BiometricImage {
   processingTimestamp?: string;
 }
 
+interface IDCardImage {
+  uri: string;
+  timestamp: string;
+  type: 'front' | 'back';
+  quality?: 'low' | 'medium' | 'high';
+  size?: { width: number; height: number };
+  fileSize?: number;
+  qualityScore?: number;
+  processingTimestamp?: string;
+}
+
+interface SelfieImage {
+  uri: string;
+  timestamp: string;
+  quality?: 'low' | 'medium' | 'high';
+  size?: { width: number; height: number };
+  fileSize?: number;
+  qualityScore?: number;
+  processingTimestamp?: string;
+  matchScore?: number; // For face matching with ID card
+}
+
+interface CNICData {
+  name: string;
+  cnic: string;
+  cnicType: string;
+  dateOfExpiry: string;
+  dateOfIssue: string;
+  dateOfBirth: string;
+  fatherName: string;
+  gender: string;
+  husbandName?: string | null;
+  referenceTag: string;
+  extractedAt: string;
+}
+
 interface ScanSession {
   id: string;
   userName: string;
   startTime: string;
   endTime?: string;
   images: BiometricImage[];
+  idCardImages: {
+    front?: IDCardImage;
+    back?: IDCardImage;
+  };
+  selfieImage?: SelfieImage;
   status: 'in_progress' | 'completed' | 'cancelled' | 'error';
 }
 
@@ -32,6 +73,19 @@ interface BiometricState {
   error: string | null;
   cameraPermission: 'granted' | 'denied' | 'not_requested';
   storagePermission: 'granted' | 'denied' | 'not_requested';
+  idCardImages: {
+    front?: IDCardImage;
+    back?: IDCardImage;
+  };
+  selfieImage?: SelfieImage;
+  cnicData?: CNICData;
+  verificationProgress: {
+    frontCard: boolean;
+    backCard: boolean;
+    selfie: boolean;
+    cnicExtracted: boolean;
+  };
+  isForFrontCard: boolean;
 }
 
 const initialState: BiometricState = {
@@ -46,6 +100,16 @@ const initialState: BiometricState = {
   error: null,
   cameraPermission: 'not_requested',
   storagePermission: 'not_requested',
+  idCardImages: {},
+  selfieImage: undefined,
+  cnicData: undefined,
+  verificationProgress: {
+    frontCard: false,
+    backCard: false,
+    selfie: false,
+    cnicExtracted: false,
+  },
+  isForFrontCard: false,
 };
 
 const biometricSlice = createSlice({
@@ -59,6 +123,7 @@ const biometricSlice = createSlice({
         userName: action.payload.userName,
         startTime: new Date().toISOString(),
         images: [],
+        idCardImages: {},
         status: 'in_progress',
       };
       state.capturedImages = [];
@@ -66,6 +131,15 @@ const biometricSlice = createSlice({
       state.isScanning = true;
       state.scanningProgress = 0;
       state.error = null;
+      state.verificationProgress = {
+        frontCard: false,
+        backCard: false,
+        selfie: false,
+        cnicExtracted: false,
+      };
+    },
+    setIsForFrontCard: (state, action: PayloadAction<boolean>) => {
+      state.isForFrontCard = action.payload;
     },
     endScanSession: (state, action: PayloadAction<{ status: 'completed' | 'cancelled' | 'error'; error?: string }>) => {
       if (state.currentSession) {
@@ -142,6 +216,9 @@ const biometricSlice = createSlice({
         state.currentSession.images = [...state.capturedImages];
       }
     },
+    clearCapturedImages: (state) => {
+      state.capturedImages = initialState.capturedImages;
+    },
     setCurrentImageIndex: (state, action: PayloadAction<number>) => {
       state.currentImageIndex = action.payload;
     },
@@ -184,6 +261,15 @@ const biometricSlice = createSlice({
       state.scanningProgress = 0;
       state.currentSession = null;
       state.error = null;
+      state.idCardImages = {};
+      state.selfieImage = undefined;
+      state.cnicData = undefined;
+      state.verificationProgress = {
+        frontCard: false,
+        backCard: false,
+        selfie: false,
+        cnicExtracted: false,
+      };
     },
     resetScanSession: (state) => {
       state.capturedImages = [];
@@ -201,6 +287,99 @@ const biometricSlice = createSlice({
     },
     clearScanHistory: (state) => {
       state.scanHistory = [];
+    },
+    setIdCardImage: (state, action: PayloadAction<{ 
+      type: 'front' | 'back';
+      uri: string;
+      quality?: 'low' | 'medium' | 'high';
+      size?: { width: number; height: number };
+      fileSize?: number;
+      qualityScore?: number;
+    }>) => {
+      const newImage: IDCardImage = {
+        uri: action.payload.uri,
+        timestamp: new Date().toISOString(),
+        type: action.payload.type,
+        quality: action.payload.quality || 'high',
+        size: action.payload.size,
+        fileSize: action.payload.fileSize,
+        qualityScore: action.payload.qualityScore,
+        processingTimestamp: new Date().toISOString(),
+      };
+
+      state.idCardImages[action.payload.type] = newImage;
+      state.verificationProgress[action.payload.type === 'front' ? 'frontCard' : 'backCard'] = true;
+
+      // Update current session if active
+      if (state.currentSession) {
+        state.currentSession.idCardImages[action.payload.type] = newImage;
+      }
+    },
+    setSelfieImage: (state, action: PayloadAction<{
+      uri: string;
+      quality?: 'low' | 'medium' | 'high';
+      size?: { width: number; height: number };
+      fileSize?: number;
+      qualityScore?: number;
+      matchScore?: number;
+    }>) => {
+      const newImage: SelfieImage = {
+        uri: action.payload.uri,
+        timestamp: new Date().toISOString(),
+        quality: action.payload.quality || 'high',
+        size: action.payload.size,
+        fileSize: action.payload.fileSize,
+        qualityScore: action.payload.qualityScore,
+        processingTimestamp: new Date().toISOString(),
+        matchScore: action.payload.matchScore,
+      };
+
+      state.selfieImage = newImage;
+      state.verificationProgress.selfie = true;
+
+      // Update current session if active
+      if (state.currentSession) {
+        state.currentSession.selfieImage = newImage;
+      }
+    },
+    clearIdCardImages: (state) => {
+      state.idCardImages = {};
+      state.verificationProgress.frontCard = false;
+      state.verificationProgress.backCard = false;
+      if (state.currentSession) {
+        state.currentSession.idCardImages = {};
+      }
+    },
+    clearSelfieImage: (state) => {
+      state.selfieImage = undefined;
+      state.verificationProgress.selfie = false;
+      if (state.currentSession) {
+        state.currentSession.selfieImage = undefined;
+      }
+    },
+    setCNICData: (state, action: PayloadAction<{
+      name: string;
+      cnic: string;
+      cnicType: string;
+      dateOfExpiry: string;
+      dateOfIssue: string;
+      dateOfBirth: string;
+      fatherName: string;
+      gender: string;
+      husbandName?: string | null;
+      referenceTag: string;
+    }>) => {
+      const cnicData: CNICData = {
+        ...action.payload,
+        extractedAt: new Date().toISOString(),
+      };
+
+      state.cnicData = cnicData;
+      state.verificationProgress.cnicExtracted = true;
+    },
+    clearCNICData: (state) => {
+      state.cnicData = undefined;
+      state.verificationProgress.cnicExtracted = false;
     },
   },
 });
@@ -221,6 +400,14 @@ export const {
   clearBiometricData,
   resetScanSession,
   clearScanHistory,
+  setIdCardImage,
+  setSelfieImage,
+  clearIdCardImages,
+  setIsForFrontCard,
+  clearSelfieImage,
+  setCNICData,
+  clearCNICData,
+  clearCapturedImages,
 } = biometricSlice.actions;
 
 export default biometricSlice.reducer; 

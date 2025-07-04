@@ -345,7 +345,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   </Text>
                 </TouchableOpacity>
                 {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
-              </View>
+              </View>           
 
               {/* Date Picker for iOS */}
               {Platform.OS === 'ios' && showDatePicker && (
@@ -464,26 +464,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-  headerContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: ColorPalettes.brand.secondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 20,
-    shadowColor: ColorPalettes.shadows.primary,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 2,
-    borderColor: ColorPalettes.borders.light,
-  },
   logoContainer: {
     width: 150,
     height: 150,
@@ -539,11 +519,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  inputFocused: {
-    borderColor: ColorPalettes.brand.primary,
-    shadowColor: ColorPalettes.shadows.primary,
-    shadowOpacity: 0.2,
-  },
   inputError: {
     borderColor: ColorPalettes.interactive.error,
   },
@@ -552,83 +527,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 5,
     fontWeight: '500',
-  },
-  instructionsContainer: {
-    backgroundColor: ColorPalettes.backgrounds.surface,
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: ColorPalettes.borders.light,
-    shadowColor: ColorPalettes.shadows.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  instructionsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: ColorPalettes.text.primary,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  instructionItem: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    alignItems: 'flex-start',
-  },
-  stepNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: ColorPalettes.brand.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-    marginTop: 2,
-  },
-  stepNumberText: {
-    color: ColorPalettes.text.light,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  stepContent: {
-    flex: 1,
-  },
-  stepTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: ColorPalettes.text.primary,
-    marginBottom: 4,
-  },
-  stepDescription: {
-    fontSize: 14,
-    color: ColorPalettes.text.secondary,
-    lineHeight: 20,
-  },
-  stickyButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: ColorPalettes.backgrounds.primary,
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: ColorPalettes.borders.light,
-    shadowColor: ColorPalettes.shadows.primary,
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
   },
   registerButton: {        
     backgroundColor: '#1E2772',
@@ -659,7 +557,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    // backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   pickerContainer: {
     backgroundColor: 'white',
