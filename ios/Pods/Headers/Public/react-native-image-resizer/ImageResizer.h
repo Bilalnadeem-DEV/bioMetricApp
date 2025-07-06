@@ -1,1 +1,0 @@
-../../../../../node_modules/@bam.tech/react-native-image-resizer/ios/ImageResizer.h

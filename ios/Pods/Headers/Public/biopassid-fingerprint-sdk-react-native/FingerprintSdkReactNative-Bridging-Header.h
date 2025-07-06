@@ -1,1 +1,0 @@
-../../../../../node_modules/@biopassid/fingerprint-sdk-react-native/ios/FingerprintSdkReactNative-Bridging-Header.h
