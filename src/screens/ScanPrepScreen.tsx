@@ -29,6 +29,8 @@ import {
 } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 import { cnicVerificationService } from '../services/cnicVerification.service';
+import { setLoggedInUserDetail } from '../store/slices/userSlice';
+import biometricService from '../services/biometric.service';
 
 type ScanPrepScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ScanPrep'>;
 
@@ -164,6 +166,20 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
           console.log('CNIC OCR Result:', result);
 
           if (result.type === 'True') {
+            // check if the cnic match with the entered cnic
+            console.log('loggedInUserDetail.cnic', loggedInUserDetail.cnic);
+            console.log('result.cnic', result.cnic);
+            if (result.cnic?.replace(/-/g, '') !== loggedInUserDetail.cnic?.toString()) {
+              Alert.alert(
+                'CNIC Verification Failed',
+                'The CNIC you entered does not match the CNIC on your ID card',
+                [{ text: 'OK' }],
+              );
+              dispatch(clearCapturedImages());
+              dispatch(setCurrentImageIndex(0));
+              return;
+            }
+
             // Save CNIC data to Redux store
             dispatch(
               setCNICData({
@@ -211,6 +227,18 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
                   const isVerified = verificationResult.code === '1';
                   const confidence = verificationResult.average_confidence || 0;
 
+                  // if verification is successful, update the user verification status
+                  if (isVerified) {
+                    biometricService.updateUserVerification(loggedInUserDetail.cnic, true);
+
+                    dispatch(
+                      setLoggedInUserDetail({
+                        ...loggedInUserDetail,
+                        is_verified: true,
+                      }),
+                    );
+                  }
+
                   Alert.alert(
                     isVerified ? 'Face Verification Successful' : 'Face Verification Failed',
                     `CNIC Data Extracted Successfully!\n\nName: ${result.Name}\nCNIC: ${
@@ -218,18 +246,19 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
                     }\nFather: ${result.father_name}\n\nFace Verification: ${
                       isVerified ? 'PASSED ✓' : 'FAILED ✗'
                     }\nConfidence: ${confidence.toFixed(2)}%\n\n${verificationResult.desc || ''}`,
-                    [{ text: 'OK',
-                      onPress: () => {
-                        isVerified ? (
-                        navigation.goBack(),
-                        dispatch(clearCapturedImages()),
-                        dispatch(setCurrentImageIndex(0)) ):
-                        dispatch(clearCapturedImages());
-                        dispatch(setCurrentImageIndex(0));
-                      }
-                    }
-                    ]
-
+                    [
+                      {
+                        text: 'OK',
+                        onPress: () => {
+                          isVerified
+                            ? (navigation.goBack(),
+                              dispatch(clearCapturedImages()),
+                              dispatch(setCurrentImageIndex(0)))
+                            : dispatch(clearCapturedImages());
+                          dispatch(setCurrentImageIndex(0));
+                        },
+                      },
+                    ],
                   );
                 } catch (verificationError: any) {
                   console.error('Face verification error:', verificationError);
@@ -250,7 +279,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
           } else {
             setIsProcessing(false);
             Alert.alert('CNIC Verification Failed', result.desc || 'Could not process CNIC image', [
-              { text: 'OK' },             
+              { text: 'OK' },
             ]);
           }
         } else {
@@ -768,3 +797,7 @@ const styles = StyleSheet.create({
 });
 
 export default ScanPrepScreen;
+
+// function updateUserVerification(cnic: string, arg1: boolean): any {
+//   throw new Error('Function not implemented.');
+// }

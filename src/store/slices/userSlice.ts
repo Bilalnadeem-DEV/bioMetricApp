@@ -20,6 +20,7 @@ interface UserState {
     lastName: string;
     cnic: string;
     dateOfBirth: string;
+    is_verified: boolean;
   }
 }
 
@@ -42,6 +43,7 @@ const initialState: UserState = {
     lastName: '',
     cnic: '',
     dateOfBirth: '',
+    is_verified: false,
   }
 };
 
@@ -58,7 +60,8 @@ const userSlice = createSlice({
     setUserRegistered: (state, action: PayloadAction<boolean>) => {
       state.isRegistered = action.payload;     
     },
-    setLoggedInUserDetail: (state, action: PayloadAction<{ firstName: string; lastName: string; cnic: string; dateOfBirth: string }>) => {
+    setLoggedInUserDetail: (state, action: PayloadAction<{ firstName: string; lastName: string; cnic: string; dateOfBirth: string; is_verified: boolean }>) => {
+      console.log('setLoggedInUserDetail', action.payload);
       state.loggedInUserDetail = action.payload;
       state.isRegistered = true
     },
@@ -68,6 +71,7 @@ const userSlice = createSlice({
         lastName: '',
         cnic: '',
         dateOfBirth: '',
+        is_verified: false,
       };
       state.isRegistered = false
     },

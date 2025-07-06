@@ -607,6 +607,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             lastName: response.user_data.last_name,
             cnic: response.user_data.cnic,
             dateOfBirth: response.user_data.date_of_birth,
+            is_verified: response.user_data.is_verified,
           }),
         );
       }

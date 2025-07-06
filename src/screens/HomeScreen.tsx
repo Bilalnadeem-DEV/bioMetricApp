@@ -94,8 +94,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </Text>
               </View>
             )}
-
-            {isRegistered && (
+            {isRegistered && !loggedInUserDetail.is_verified ? (
               <View style={styles.buttonContainer}>
                 <Text
                   style={{
@@ -110,7 +109,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   scanning your ID card.
                 </Text>
               </View>
-            )}
+            ): <></>}
             {isRegistered && (
               <View style={styles.userDetailsContainer}>
                 <Text style={styles.userDetailText}>
@@ -129,10 +128,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   <Text style={styles.labelText}>Date of Birth: </Text>
                   {loggedInUserDetail.dateOfBirth}
                 </Text>
+                <Text style={styles.userDetailText}>
+                  <Text style={styles.labelText}>CNIC Verified: </Text>
+                  {loggedInUserDetail.is_verified ? 'Yes' : 'No'}
+                </Text>
+                
               </View>
             )}
           </View>
-          
+                   
           {!isRegistered ? (
           // {false ? (
             <View style={styles.buttonContainer}>
@@ -148,11 +152,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity
+            !loggedInUserDetail.is_verified ? (
+              <TouchableOpacity
               style={[styles.button, styles.newScreenButton]}
               onPress={() => navigation.navigate('ScanPrep')}>
               <Text style={styles.buttonText}>CNIC Verification</Text>
             </TouchableOpacity>
+            ): <></>           
           )}
         </View>
       </ScrollView>
