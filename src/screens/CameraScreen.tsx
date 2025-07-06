@@ -8,8 +8,9 @@ import {
   StatusBar,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
-import { Camera, useCameraDevices } from 'react-native-vision-camera';
+import { Camera, useCameraDevices, useCameraFormat } from 'react-native-vision-camera';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -46,13 +47,24 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   const [isCapturing, setIsCapturing] = useState(false);
   const camera = useRef<Camera>(null);
   const devices = useCameraDevices();
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const { imageIndex = 0, onImageCaptured } = route.params || {};
 
   // Find the back camera
   const deviceBack = devices.find(d => d.position === 'back') || devices[0];
   const deviceFront = devices.find(d => d.position === 'front') || devices[0];
+
+  // Configure camera format for best quality (especially important for Android)
+  const backCameraFormat = useCameraFormat(deviceBack, [
+    { photoResolution: 'max' }, // Use maximum available resolution
+    { fps: 60 }, // Higher FPS for faster focus
+    { autoFocusSystem: 'phase-detection' }, // Better for moving subjects
+  ]);
+
+  const centerPoint = {
+    x: Dimensions.get('window').width / 2,
+    y: Dimensions.get('window').height / 2,
+  };
 
   useEffect(() => {
     const requestPermission = async () => {
@@ -98,29 +110,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     };
   }, [dispatch]);
 
-  useEffect(() => {
-    // Start pulsing animation for the capture area
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.02,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    pulseAnimation.start();
-
-    return () => {
-      pulseAnimation.stop();
-      pulseAnimation.reset();
-    };
-  }, [pulseAnim]);
+  // Removed animation effect
 
   const capturePhoto = async () => {
     if (camera.current && !isFocusing && !isCapturing) {
@@ -140,27 +130,28 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           dispatch(setError('Capture operation timed out. Please try again.'));
         }, 15000); // 15 second timeout
 
-        // Focus on the fingerprint area
-        const fingerprintFocusPoint = { x: 0.5, y: 0.6 };
-
+        // Focus on the center of the frame
         try {
-          await Promise.race([
-            camera.current.focus(fingerprintFocusPoint),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Focus timeout')), 5000)),
-          ]);
-          console.log('Focus successful on fingerprint area');
+          await camera.current?.focus(centerPoint);
+          console.log('Camera focused on center point');
         } catch (focusError) {
-          console.log('Focus failed:', focusError);
-          // Continue without focus if it fails
+          console.warn('Focus error:', focusError);
+          // Continue with capture even if focus fails
         }
 
-        // Wait for focus to stabilize
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Short pause before capture to let any motion settle and focus to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
 
+        // Configure photo options for best quality
+        const photoOptions = {
+          enableShutterSound: true,
+          flash: 'off' as const,
+          enableAutoStabilization: false,
+        };
+
+        // Take photo with configured options
         const photo = await Promise.race([
-          camera.current.takePhoto({
-            enableShutterSound: false,
-          }),
+          camera.current.takePhoto(photoOptions),
           new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error('Photo capture timeout')), 10000),
           ),
@@ -175,20 +166,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         const imageUri = `file://${photo.path}`;
         console.log('Image captured:', imageUri);
 
-        // Zoom animation after capture
-        const zoomAnimation = Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.3,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-        ]);
-        zoomAnimation.start();
+        // Removed zoom animation
 
         // Save image to gallery with timeout protection
         try {
@@ -294,6 +272,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         ref={camera}
         style={styles.camera}
         device={imageIndex < 2 ? deviceBack : deviceFront}
+        format={imageIndex < 2 ? backCameraFormat : undefined}
         isActive={true}
         photo={true}
         // torch='on'
@@ -331,16 +310,16 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
                 <View style={styles.faceFrameInner}>
                   {/* Face outline */}
                   <View style={styles.faceOutline} />
-                  
+
                   {/* Eye guides */}
                   <View style={styles.eyeGuides}>
                     <View style={styles.eyeGuide} />
                     <View style={styles.eyeGuide} />
                   </View>
-                  
+
                   {/* Nose guide */}
                   <View style={styles.noseGuide} />
-                  
+
                   {/* Mouth guide */}
                   <View style={styles.mouthGuide} />
                 </View>
@@ -408,7 +387,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,    
+    bottom: 0,
   },
   topSection: {
     flexDirection: 'row',
