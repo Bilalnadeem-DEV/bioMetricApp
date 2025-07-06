@@ -70,6 +70,33 @@ yarn-error.log
 /ios/Pods/
 /vendor/bundle/
 
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# Android build
+android/.gradle/
+android/build/
+android/app/build/
+android/link-assets-manifest.json
+
+# iOS build
+ios/build/
+ios/Pods/
+ios/link-assets-manifest.json
+ios/*.xcworkspace/xcuserdata/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
 
