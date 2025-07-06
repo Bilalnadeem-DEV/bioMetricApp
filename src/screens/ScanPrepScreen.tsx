@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  Platform,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -89,8 +90,9 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [pulseAnim]);
 
   const handleThumbnailPress = (index: number) => {
-    dispatch(setCurrentImageIndex(index));
-    navigation.navigate('Camera', {
+    dispatch(setCurrentImageIndex(index));    
+
+    navigation.navigate(Platform.OS === 'android' ? 'CameraAndroid' : 'Camera', {
       imageIndex: index,
       onImageCaptured: (imageUri: string, capturedIndex: number) => {
         // Get image dimensions and file size
@@ -299,7 +301,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     const nextIndex = capturedImages.length;
     dispatch(setCurrentImageIndex(nextIndex));
-    navigation.navigate('Camera', {
+    navigation.navigate(Platform.OS === 'android' ? 'CameraAndroid' : 'Camera', {
       imageIndex: nextIndex,
       onImageCaptured: (imageUri: string, capturedIndex: number) => {
         // Get image dimensions and file size
@@ -696,15 +698,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 20,
     borderRadius: 16,
-    borderColor: ColorPalettes.borders.light,
-    shadowColor: ColorPalettes.shadows.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    borderColor: ColorPalettes.borders.light,  
   },
   progressTitle: {
     fontSize: 16,

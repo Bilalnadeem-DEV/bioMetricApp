@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+yarn.lock
+package-lock.json
+
+# Build outputs
+build/
+dist/
+android/app/build/
+ios/build/
+
+# Generated files
+.expo/
+.expo-shared/
+coverage/
+.next/
+web-build/
+
+# Environment and config files
+.env
+.env.*
+*.config.js
+metro.config.js
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db 

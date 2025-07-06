@@ -22,6 +22,7 @@ import SplashScreen from './src/screens/SplashScreen';
 import NewScreen from './src/screens/NewScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import BiometricLogin from './src/screens/BiometricLogin';
+import CameraScreenAndroid from './src/screens/CameraScreenAndroid';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -29,10 +30,11 @@ export type RootStackParamList = {
   Register: undefined;
   ScanPrep: undefined;
   Camera: { imageIndex?: number; onImageCaptured?: (imageUri: string, index: number) => void };
+  CameraAndroid: { imageIndex?: number; onImageCaptured?: (imageUri: string, index: number) => void };
   ImagePreview: { imageUri: string };
   NewScreen: undefined;
   Login: undefined;
-  BiometricLogin: undefined;
+  BiometricLogin: undefined;  
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -84,6 +86,13 @@ function App(): React.JSX.Element {
             component={CameraScreen}
             listeners={{
               focus: () => console.log('CameraScreen focused'),
+            }}
+          />
+          <Stack.Screen 
+            name="CameraAndroid" 
+            component={CameraScreenAndroid}
+            listeners={{
+              focus: () => console.log('CameraScreenAndroid focused'),
             }}
           />
           <Stack.Screen 

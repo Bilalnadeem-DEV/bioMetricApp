@@ -136,6 +136,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </View>
             )}
           </View>
+
+          <TouchableOpacity
+              style={[styles.button, styles.newScreenButton]}
+              onPress={() => navigation.navigate('ScanPrep')}>
+              <Text style={styles.buttonText}>CNIC Verification</Text>
+            </TouchableOpacity>
                    
           {!isRegistered ? (
           // {false ? (
