@@ -75,6 +75,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         )}
+        <View style={styles.tunerContainer}>
+            <TouchableOpacity style={styles.tunerButton} onPress={() => navigation.navigate('Tuner')}>
+              <Text style={styles.tunerButtonText}>Tuner</Text>
+            </TouchableOpacity>
+          </View>       
         <View style={styles.content}>
           <View style={styles.topSection}>
             <View style={styles.logoContainer}>
@@ -135,7 +140,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 
               </View>
             )}
-          </View>              
+          </View>    
+          <TouchableOpacity
+              style={[styles.button, styles.newScreenButton]}
+              onPress={() => navigation.navigate('ScanPrep')}>
+              <Text style={styles.buttonText}>CNIC Verification</Text>
+            </TouchableOpacity>          
           {!isRegistered ? (
           // {false ? (
             <View style={styles.buttonContainer}>
@@ -180,6 +190,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 30,
     right: 20,
+    zIndex: 10,
+  },
+  tunerContainer: {
+    position: 'absolute',
+    top: 30,
+    left: 20,
     zIndex: 10,
   },
   logoutButton: {
@@ -308,6 +324,27 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: ColorPalettes.text.secondary,
+  },
+  tunerButton: {
+    backgroundColor: ColorPalettes.interactive.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    shadowColor: ColorPalettes.shadows.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.light,
+  },
+  tunerButtonText: {
+    color: ColorPalettes.text.light,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

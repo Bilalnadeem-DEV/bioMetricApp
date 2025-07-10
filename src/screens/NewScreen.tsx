@@ -62,7 +62,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const [showInstructions, setShowInstructions] = useState(true);
 
   useEffect(() => {     
-    setShowInstructions(true)   
+    // setShowInstructions(true)
     const loadSDK = async () => {
       try {
         const sdk = await import('@biopassid/fingerprint-sdk-react-native');
@@ -138,7 +138,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       enabled: true,
       messages: {
         leftHandMessage: 
-          'Place your left hand (without thumb)\nuntil the marker is centered.',
+          'Place your left hand (without thumb)\nUse the optimal lighting conditions.',
         rightHandMessage:
           'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
         thumbsMessage:
@@ -714,7 +714,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           <Text style={styles.subtitle}>Secure biometric authentication</Text>
         </View>
 
-        <View style={styles.statusContainer}>
+        {/* <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>Service Status:</Text>
           <Text
             style={[
@@ -728,7 +728,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           {fingerRects.length > 0 && (
             <Text style={styles.fingerCount}>Fingers detected: {fingerRects.length}</Text>
           )}
-        </View>
+        </View> */}
 
         {sdkError && (
           <View style={styles.errorContainer}>
@@ -764,18 +764,22 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         {capturedImages.length > 0 && (
           <View style={styles.resultsContainer}>
             <Text style={styles.resultsTitle}>Captured Fingerprints:</Text>
-            <Text style={styles.reduxInfo}>
-              Session: {currentSession?.status || 'No active session'} | 
-              Total Scans: {totalScansCompleted} | 
-              Images: {capturedImages.length}
-            </Text>
+            <Text style={styles.instructionText}>Please verify the following requirements:</Text>
+            <Text style={styles.checklistItem}>✓ All four fingers are clearly visible in the image</Text>
+            <Text style={styles.checklistItem}>✓ The image is sharp and not blurry</Text>
+            <Text style={styles.checklistItem}>✓ Each fingerprint has distinct ridge patterns</Text>
+            <Text style={styles.checklistItem}>✓ The lighting is adequate and even</Text>
+            <Text style={styles.checklistItem}>✓ The hand position is stable with no motion blur</Text>
+            <Text style={styles.checklistItem}>✓ The image quality score is above 75/100</Text>
+            <Text style={[styles.instructionText, styles.warningText]}>⚠️ If any of the above requirements are not met, please retake the fingerprint scan</Text>
+
             <View style={styles.imageGrid}>
               {capturedImages.map((image, index) => (
                 <View key={`${image.timestamp}-${index}`} style={styles.imageContainer}>
                   <Image
                     source={{ uri: image.uri }}
                     style={styles.fingerprintImage}
-                    resizeMode="contain"
+                    resizeMode='cover'
                   />
                   <Text style={styles.imageLabel}>
                     Finger {image.index + 1}
@@ -821,7 +825,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.button, styles.sendButton]}
             onPress={handleSendBiometric}>
-            <Text style={styles.buttonText}>Send for bioMetric</Text>
+            <Text style={styles.buttonText}>Send for verification</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1077,13 +1081,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   imageContainer: {
-    width: '48%',
+    width: '100%',
     marginBottom: 15,
     alignItems: 'center',
   },
   fingerprintImage: {
-    width: 120,
-    height: 120,
+    width: '100%',
+    height: 220,
     borderRadius: 8,
     backgroundColor: ColorPalettes.backgrounds.secondary,
     borderWidth: 1,
@@ -1338,13 +1342,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   instructionText: {
-    color: '#FFFFFF',
+    color: 'black',
     fontSize: 20,
     marginBottom: 10,
-    fontWeight: '600',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    fontWeight: '600',    
   },
   dismissButton: {
     position: 'absolute',
@@ -1363,6 +1364,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  checklistItem: {
+    fontSize: 14,
+    color: ColorPalettes.text.dark,
+    marginVertical: 4,
+    paddingLeft: 10,
+  },
+  warningText: {
+    color: ColorPalettes.interactive.error,
+    marginTop: 10,
+    fontWeight: '500',
   },
 });
 

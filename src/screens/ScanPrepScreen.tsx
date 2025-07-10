@@ -171,16 +171,16 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
             // check if the cnic match with the entered cnic
             console.log('loggedInUserDetail.cnic', loggedInUserDetail.cnic);
             console.log('result.cnic', result.cnic);
-            if (result.cnic?.replace(/-/g, '') !== loggedInUserDetail.cnic?.toString()) {
-              Alert.alert(
-                'CNIC Verification Failed',
-                'The CNIC you entered does not match the CNIC on your ID card',
-                [{ text: 'OK' }],
-              );
-              dispatch(clearCapturedImages());
-              dispatch(setCurrentImageIndex(0));
-              return;
-            }
+            // if (result.cnic?.replace(/-/g, '') !== loggedInUserDetail.cnic?.toString()) {
+            //   Alert.alert(
+            //     'CNIC Verification Failed',
+            //     'The CNIC you entered does not match the CNIC on your ID card',
+            //     [{ text: 'OK' }],
+            //   );
+            //   dispatch(clearCapturedImages());
+            //   dispatch(setCurrentImageIndex(0));
+            //   return;
+            // }
 
             // Save CNIC data to Redux store
             dispatch(

@@ -8,21 +8,20 @@ import {
   StatusBar,
   Animated,
   Dimensions,
-  Platform,
 } from 'react-native';
-import { Camera, useCameraDevices, useCameraFormat } from 'react-native-vision-camera';
+import { Camera, useCameraDevices } from 'react-native-vision-camera';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import {
-  setCameraPermission,
-  setStoragePermission,
-  setIsScanning,
-  setError,
+import { 
+  setCameraPermission, 
+  setStoragePermission, 
+  setIsScanning, 
+  setError, 
   clearError,
-  addCapturedImage,
+  addCapturedImage 
 } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
@@ -38,53 +37,50 @@ const { width, height } = Dimensions.get('window');
 
 const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
-  const { cameraPermission, storagePermission, isScanning, error, currentSession } = useAppSelector(
-    state => state.biometric,
-  );
-
+  const { 
+    cameraPermission, 
+    storagePermission, 
+    isScanning, 
+    error,
+    currentSession 
+  } = useAppSelector((state) => state.biometric);
+  
   const [hasPermission, setHasPermission] = useState(cameraPermission === 'granted');
   const [isFocusing, setIsFocusing] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const camera = useRef<Camera>(null);
   const devices = useCameraDevices();
-
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  
   const { imageIndex = 0, onImageCaptured } = route.params || {};
+  
+  // Find the back camera
+  const device = devices.find(d => d.position === 'back') || devices[0];
 
   // Find the back camera
   const deviceBack = devices.find(d => d.position === 'back') || devices[0];
   const deviceFront = devices.find(d => d.position === 'front') || devices[0];
-
-  // Configure camera format for best quality (especially important for Android)
-  const backCameraFormat = useCameraFormat(deviceBack, [
-    { photoResolution: 'max' }, // Use maximum available resolution
-    { fps: 60 }, // Higher FPS for faster focus
-    { autoFocusSystem: 'phase-detection' }, // Better for moving subjects
-  ]);
-
-  const centerPoint = {
-    x: Dimensions.get('window').width / 2,
-    y: Dimensions.get('window').height / 2,
-  };
 
   useEffect(() => {
     const requestPermission = async () => {
       try {
         const permission = await Camera.requestCameraPermission();
         const hasCamera = permission === 'granted';
-
+        
         setHasPermission(hasCamera);
         dispatch(setCameraPermission(permission));
-
+        
         if (!hasCamera) {
           dispatch(setError('Camera permission is required for biometric scanning'));
           Alert.alert('Camera Permission', 'Camera permission is required for biometric scanning.');
           navigation.goBack();
           return;
         }
-
+        
         // Clear any previous errors
         dispatch(clearError());
         dispatch(setIsScanning(true));
+        
       } catch (error) {
         console.error('Error requesting camera permission:', error);
         dispatch(setError('Failed to request camera permission'));
@@ -92,7 +88,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         navigation.goBack();
       }
     };
-
+    
     if (cameraPermission === 'not_requested') {
       requestPermission();
     } else {
@@ -110,18 +106,40 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     };
   }, [dispatch]);
 
-  // Removed animation effect
+  useEffect(() => {
+    // Start pulsing animation for the capture area
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.02,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseAnimation.start();
+    
+    return () => {
+      pulseAnimation.stop();
+      pulseAnimation.reset();
+    };
+  }, [pulseAnim]);
 
   const capturePhoto = async () => {
     if (camera.current && !isFocusing && !isCapturing) {
       let captureTimeout: NodeJS.Timeout | null = null;
-
+      
       try {
         console.log(`Capturing image ${imageIndex + 1}...`);
         setIsCapturing(true);
         setIsFocusing(true);
         dispatch(clearError());
-
+        
         // Set a timeout to prevent indefinite hanging
         captureTimeout = setTimeout(() => {
           setIsFocusing(false);
@@ -129,55 +147,69 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           console.error('Capture operation timed out');
           dispatch(setError('Capture operation timed out. Please try again.'));
         }, 15000); // 15 second timeout
-
-        // Focus on the center of the frame
+        
+        // Focus on the fingerprint area
+        const fingerprintFocusPoint = { x: 0.5, y: 0.6 };
+        
         try {
-          await camera.current?.focus(centerPoint);
-          console.log('Camera focused on center point');
+          await Promise.race([
+            camera.current.focus(fingerprintFocusPoint),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Focus timeout')), 5000)
+            )
+          ]);
+          console.log('Focus successful on fingerprint area');
         } catch (focusError) {
-          console.warn('Focus error:', focusError);
-          // Continue with capture even if focus fails
+          console.log('Focus failed:', focusError);
+          // Continue without focus if it fails
         }
-
-        // Short pause before capture to let any motion settle and focus to complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Configure photo options for best quality
-        const photoOptions = {
-          enableShutterSound: true,
-          flash: 'off' as const,
-          enableAutoStabilization: false,
-        };
-
-        // Take photo with configured options
+        
+        // Wait for focus to stabilize
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const photo = await Promise.race([
-          camera.current.takePhoto(photoOptions),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Photo capture timeout')), 10000),
-          ),
+          camera.current.takePhoto({
+            enableShutterSound: false,
+          }),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Photo capture timeout')), 10000)
+          )
         ]);
-
+        
         // Clear the timeout since capture was successful
         if (captureTimeout) {
           clearTimeout(captureTimeout);
           captureTimeout = null;
         }
-
+        
         const imageUri = `file://${photo.path}`;
         console.log('Image captured:', imageUri);
-
-        // Removed zoom animation
-
+        
+        // Zoom animation after capture
+        const zoomAnimation = Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.3,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]);
+        zoomAnimation.start();
+        
         // Save image to gallery with timeout protection
         try {
           await Promise.race([
             CameraRoll.saveAsset(imageUri, {
               type: 'photo',
-              album: 'hyperI Scans',
+              album: 'hyperI Scans'
             }),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('Save timeout')), 8000),
-            ),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Save timeout')), 8000)
+            )
           ]);
           dispatch(setStoragePermission('granted'));
         } catch (saveError) {
@@ -185,57 +217,52 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           dispatch(setStoragePermission('denied'));
           dispatch(setError('Failed to save image to gallery'));
         }
-
+        
         // Get image dimensions for Redux store with timeout
         const imageSize = await Promise.race([
-          new Promise<{ width: number; height: number }>(resolve => {
-            require('react-native').Image.getSize(
-              imageUri,
-              (width: number, height: number) => {
-                resolve({ width, height });
-              },
-              () => {
-                resolve({ width: 0, height: 0 });
-              },
-            );
+          new Promise<{width: number, height: number}>((resolve) => {
+            require('react-native').Image.getSize(imageUri, (width: number, height: number) => {
+              resolve({ width, height });
+            }, () => {
+              resolve({ width: 0, height: 0 });
+            });
           }),
-          new Promise<{ width: number; height: number }>(resolve =>
-            setTimeout(() => resolve({ width: 0, height: 0 }), 3000),
-          ),
+          new Promise<{width: number, height: number}>((resolve) => 
+            setTimeout(() => resolve({ width: 0, height: 0 }), 3000)
+          )
         ]);
-
+        
         // Add to Redux store
-        dispatch(
-          addCapturedImage({
-            uri: imageUri,
-            index: imageIndex,
-            quality: 'high',
-            size: imageSize,
-          }),
-        );
-
+        dispatch(addCapturedImage({
+          uri: imageUri,
+          index: imageIndex,
+          quality: 'high',
+          size: imageSize,
+        }));
+        
         setIsFocusing(false);
         setIsCapturing(false);
-
+        
         // Call the callback if provided
         if (onImageCaptured) {
           onImageCaptured(imageUri, imageIndex);
         }
-
+        
         console.log('Image captured and saved successfully');
-
+        
         // Navigate back to previous screen after a brief delay to show the zoom effect
         setTimeout(() => {
           navigation.goBack();
         }, 600);
+        
       } catch (error) {
         console.error('Error capturing image:', error);
-
+        
         // Clear timeout if it exists
         if (captureTimeout) {
           clearTimeout(captureTimeout);
         }
-
+        
         setIsFocusing(false);
         setIsCapturing(false);
         dispatch(setError('Failed to capture biometric scan. Please try again.'));
@@ -249,14 +276,12 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     navigation.goBack();
   };
 
-  if (!hasPermission || !deviceBack) {
+  if (!hasPermission || !device) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
         <Text style={styles.errorText}>
-          {!hasPermission
-            ? 'Camera permission required for biometric scanning'
-            : 'No camera device found'}
+          {!hasPermission ? 'Camera permission required for biometric scanning' : 'No camera device found'}
         </Text>
         <TouchableOpacity style={styles.backButton} onPress={closeCamera}>
           <Text style={styles.backButtonText}>Go Back</Text>
@@ -272,12 +297,11 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         ref={camera}
         style={styles.camera}
         device={imageIndex < 2 ? deviceBack : deviceFront}
-        format={imageIndex < 2 ? backCameraFormat : undefined}
         isActive={true}
         photo={true}
-        // torch='on'
+        torch='off'
       />
-
+      
       {/* Camera Overlay */}
       <View style={styles.cameraOverlay}>
         {/* Top Section */}
@@ -365,6 +389,9 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         </View>
       </View>
     </View>
+
+
+
   );
 };
 
@@ -607,4 +634,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CameraScreen;
+export default CameraScreen; 

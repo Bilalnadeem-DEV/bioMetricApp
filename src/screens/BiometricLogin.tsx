@@ -45,6 +45,7 @@ const BiometricLogin: React.FC<BiometricLoginProps> = ({ navigation }) => {
 
   // Get data from Redux store
   const userName = useAppSelector(state => state.user.name);
+  const scanConfig = useAppSelector(state => state.scan);
   const {
     capturedImages,
     isScanning,
@@ -102,6 +103,115 @@ const BiometricLogin: React.FC<BiometricLoginProps> = ({ navigation }) => {
   useEffect(() => {
     setShowInstructions(true);
   }, [dispatch]);
+
+  const configg = {
+    licenseKey: '9KM2-DLW6-E8VY-ADFI',
+    numberFingersToCapture: 4,
+    captureType: scanConfig.captureType,
+    outputType: scanConfig.outputType,
+    timeToCapture: scanConfig.timeToCapture,
+    overlayColor: scanConfig.overlayColor,
+    imageQuality: {
+      compressionQuality: scanConfig.imageQuality.compressionQuality,
+      imageFormat: scanConfig.imageQuality.imageFormat,
+      enableHighResolution: scanConfig.imageQuality.enableHighResolution,
+      antiAliasing: scanConfig.imageQuality.antiAliasing,
+    },
+    cameraSettings: {
+      focusMode: scanConfig.cameraSettings.focusMode,
+      exposureMode: scanConfig.cameraSettings.exposureMode,
+      whiteBalanceMode: scanConfig.cameraSettings.whiteBalanceMode,
+      stabilization: scanConfig.cameraSettings.stabilization,
+      highQualityMode: scanConfig.cameraSettings.highQualityMode,
+    },
+    processingSettings: {
+      enableNoiseReduction: scanConfig.processingSettings.enableNoiseReduction,
+      enableSharpening: scanConfig.processingSettings.enableSharpening,
+      contrastEnhancement: scanConfig.processingSettings.contrastEnhancement,
+      brightnessAdjustment: scanConfig.processingSettings.brightnessAdjustment,
+      qualityThreshold: scanConfig.processingSettings.qualityThreshold,
+    },
+    captureCountdown: {
+      enabled: scanConfig.captureCountdown.enabled,
+      backgroundColor: scanConfig.captureCountdown.backgroundColor,
+      progressColor: scanConfig.captureCountdown.progressColor,
+      textColor: scanConfig.captureCountdown.textColor,
+      countdownDuration: scanConfig.captureCountdown.countdownDuration,
+    },
+    backButton: {
+      enabled: scanConfig.backButton.enabled,
+      backgroundColor: scanConfig.backButton.backgroundColor,
+      buttonPadding: scanConfig.backButton.buttonPadding,
+      buttonSize: { width: 56, height: 56 },
+      iconOptions: {
+        enabled: true,
+        iconFile: 'fingerprintsdk_ic_close',
+        iconColor: ColorPalettes.text.light,
+        iconSize: { width: 32, height: 32 },
+      },
+      labelOptions: {
+        enabled: false,
+        content: 'Back',
+        textColor: ColorPalettes.text.light,
+        textSize: 14,
+      },
+    },
+    helpText: {
+      enabled: scanConfig.helpText.enabled,
+      messages: {
+        leftHandMessage: 
+          'Place your left hand (without thumb)\nuntil the marker is centered.',
+        rightHandMessage:
+          'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
+        thumbsMessage:
+          'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
+      },
+      textColor: scanConfig.helpText.textColor,
+      textSize: scanConfig.helpText.textSize,      
+    },
+    fingerEllipse: {
+      enabled: scanConfig.fingerEllipse.enabled,
+      thickness: scanConfig.fingerEllipse.thickness,
+    },
+    distanceIndicator: {
+      enabled: scanConfig.distanceIndicator.enabled,
+      selectedBarColor: scanConfig.distanceIndicator.selectedBarColor,
+      unselectedBarColor: scanConfig.distanceIndicator.unselectedBarColor,
+      arrowColor: scanConfig.distanceIndicator.arrowColor,
+      sensitivity: scanConfig.distanceIndicator.sensitivity,
+      tooCloseText: {
+        enabled: true,
+        content: 'Too close',
+        textColor: ColorPalettes.interactive.error,
+        textSize: 16,
+      },
+      tooFarText: {
+        enabled: true,
+        content: 'Too far',
+        textColor: ColorPalettes.interactive.error,
+        textSize: 16,
+      },
+      perfectDistanceText: {
+        enabled: true,
+        content: 'Perfect distance - hold steady!',
+        textColor: ColorPalettes.interactive.success,
+        textSize: 16,
+      },
+    },
+    motionDetection: {
+      enabled: scanConfig.motionDetection.enabled,
+      sensitivity: scanConfig.motionDetection.sensitivity,
+      stabilizationTime: scanConfig.motionDetection.stabilizationTime,
+      motionThreshold: scanConfig.motionDetection.motionThreshold,
+    },
+    qualityValidation: {
+      enabled: scanConfig.qualityValidation.enabled,
+      minimumQualityScore: scanConfig.qualityValidation.minimumQualityScore,
+      rejectBlurryImages: scanConfig.qualityValidation.rejectBlurryImages,
+      rejectLowContrastImages: scanConfig.qualityValidation.rejectLowContrastImages,
+      enableQualityFeedback: scanConfig.qualityValidation.enableQualityFeedback,
+    },
+  };
 
   const config = {
     licenseKey: '9KM2-DLW6-E8VY-ADFI',
@@ -498,6 +608,155 @@ const BiometricLogin: React.FC<BiometricLoginProps> = ({ navigation }) => {
     </Modal>
   );
 
+
+  const checkAndRequestPermissions = async (): Promise<boolean> => {
+    try {
+      if (Platform.OS === 'ios') {
+        // On iOS, permissions are handled automatically by CameraRoll
+        return true;
+      } else {
+        // On Android, we might need to check permissions
+        // For now, we'll assume permissions are granted
+        // The CameraRoll library should handle permission requests
+        return true;
+      }
+    } catch (error) {
+      console.error('Permission check failed:', error);
+      return false;
+    }
+  };
+
+  const saveBase64ImageToFile = async (base64Data: string, imageIndex: number): Promise<string> => {
+    try {
+      // Extract base64 data (remove data:image/jpeg;base64, prefix if present)
+      const base64Image = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+
+      // Create a temporary file path
+      const fileName = `fingerprint_${Date.now()}_${imageIndex}.jpg`;
+      const filePath = `${RNFS.TemporaryDirectoryPath}/${fileName}`;
+
+      // Write base64 data to file
+      await RNFS.writeFile(filePath, base64Image, 'base64');
+
+      console.log('Temporary file created:', filePath);
+      return filePath;
+    } catch (error) {
+      console.error('Error creating temporary file:', error);
+      throw error;
+    }
+  };
+
+  const saveImageToGallery = async (imageUri: string, imageIndex: number) => {
+    try {
+      // Validate the image URI
+      if (!imageUri || typeof imageUri !== 'string') {
+        throw new Error('Invalid image URI');
+      }
+
+      // Check permissions first
+      const hasPermission = await checkAndRequestPermissions();
+      if (!hasPermission) {
+        throw new Error('Photo library permission denied');
+      }
+
+      console.log('Starting save process for image:', {
+        imageIndex,
+        uriStart: imageUri.substring(0, 50) + '...',
+      });
+
+      let filePathToSave: string;
+
+      // If it's a base64 data URI, convert to file first
+      if (imageUri.startsWith('data:image/')) {
+        console.log('Converting base64 to file...');
+        filePathToSave = await saveBase64ImageToFile(imageUri, imageIndex);
+      } else {
+        // If it's already a file path, use it directly
+        filePathToSave = imageUri;
+      }
+
+      console.log('Saving file to camera roll:', filePathToSave);
+
+      // Save to camera roll
+      let result;
+      if (Platform.OS === 'ios') {
+        result = await CameraRoll.save(filePathToSave, { type: 'photo' });
+      } else {
+        // Try with album first, fallback to no album
+        try {
+          result = await CameraRoll.save(filePathToSave, {
+            type: 'photo',
+            album: 'hyperI Fingerprints',
+          });
+        } catch (albumError) {
+          console.log('Album creation failed, trying without album:', albumError);
+          result = await CameraRoll.save(filePathToSave, { type: 'photo' });
+        }
+      }
+
+      // Clean up temporary file if we created one
+      if (
+        imageUri.startsWith('data:image/') &&
+        filePathToSave.includes(RNFS.TemporaryDirectoryPath)
+      ) {
+        try {
+          await RNFS.unlink(filePathToSave);
+          console.log('Temporary file cleaned up');
+        } catch (cleanupError) {
+          console.log('Failed to cleanup temporary file:', cleanupError);
+        }
+      }
+
+      Alert.alert(
+        'Success!',
+        `Fingerprint image ${imageIndex + 1} has been saved to your photo gallery.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => console.log('Image saved successfully:', result),
+          },
+        ],
+      );
+
+      console.log('Image saved to gallery:', result);
+    } catch (error) {
+      console.error('Error saving image to gallery:', error);
+
+      let errorMessage = 'Failed to save image to gallery.';
+      if (error instanceof Error) {
+        if (error.message.includes('permission') || error.message.includes('denied')) {
+          errorMessage = 'Permission denied. Please allow photo library access in Settings.';
+        } else if (error.message.includes('space')) {
+          errorMessage = 'Not enough storage space to save the image.';
+        } else if (error.message.includes('Invalid')) {
+          errorMessage = 'Invalid image format. Please try capturing again.';
+        } else {
+          errorMessage = `Save failed: ${error.message}`;
+        }
+      }
+
+      Alert.alert(
+        'Save Failed',
+        errorMessage + '\n\nPlease check your device settings and try again.',
+        [
+          {
+            text: 'Open Settings Guide',
+            onPress: () => {
+              Alert.alert(
+                'Settings Guide',
+                Platform.OS === 'ios'
+                  ? 'Go to Settings > Privacy & Security > Photos > hyperI and enable "Add Photos Only" or "Full Access".'
+                  : 'Go to Settings > Apps > hyperI > Permissions > Storage and enable it.',
+                [{ text: 'Got it' }],
+              );
+            },
+          },
+          { text: 'Cancel' },
+        ],
+      );
+    }
+  };
+
   const InstructionsModal = () => (
     <Modal
       animationType="fade"
@@ -576,15 +835,74 @@ const BiometricLogin: React.FC<BiometricLoginProps> = ({ navigation }) => {
               {!sdkLoaded ? 'Service Unavailable' : 'Ready to scan ?'}
             </Text>
           </TouchableOpacity>
-          {capturedImages && capturedImages.length > 0 && (
-            <TouchableOpacity
-              style={[styles.button, styles.sendButton]}
-              onPress={handleSendBiometric}>
-              <Text style={styles.buttonText}>Send for bioMetric</Text>
-            </TouchableOpacity>
-          )}
         </View>
+        {capturedImages.length > 0 && (         
+          <View style={styles.resultsContainer}>
+            <Text style={styles.resultsTitle}>Captured Fingerprints:</Text>
+            <Text style={styles.instructionText}>Please verify the following requirements:</Text>
+            <Text style={styles.checklistItem}>✓ All four fingers are clearly visible in the image</Text>
+            <Text style={styles.checklistItem}>✓ The image is sharp and not blurry</Text>
+            <Text style={styles.checklistItem}>✓ Each fingerprint has distinct ridge patterns</Text>
+            <Text style={styles.checklistItem}>✓ The lighting is adequate and even</Text>
+            <Text style={styles.checklistItem}>✓ The hand position is stable with no motion blur</Text>
+            <Text style={styles.checklistItem}>✓ The image quality score is above 75/100</Text>
+            <Text style={[styles.instructionText, styles.warningText]}>⚠️ If any of the above requirements are not met, please retake the fingerprint scan</Text>
+
+            <View style={styles.imageGrid}>
+              {capturedImages.map((image, index) => (
+                <View key={`${image.timestamp}-${index}`} style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: image.uri }}
+                    style={styles.fingerprintImage}
+                    resizeMode='cover'
+                  />
+                  <Text style={styles.imageLabel}>
+                    Finger {image.index + 1}
+                  </Text>
+                  <Text style={styles.imageTimestamp}>
+                    {new Date(image.timestamp).toLocaleTimeString()}
+                  </Text>
+                  {image.quality && (
+                    <Text style={[
+                      styles.imageQuality,
+                      image.quality === 'high' && styles.qualityHigh,
+                      image.quality === 'medium' && styles.qualityMedium,
+                      image.quality === 'low' && styles.qualityLow,
+                    ]}>
+                      Quality: {image.quality.toUpperCase()}
+                    </Text>
+                  )}
+                  {image.qualityScore && (
+                    <Text style={styles.qualityScore}>
+                      Score: {image.qualityScore}/100
+                    </Text>
+                  )}
+                  {image.fileSize && (
+                    <Text style={styles.fileSize}>
+                      Size: {Math.round(image.fileSize / 1024)}KB
+                    </Text>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.saveImageButton}
+                    onPress={() => saveImageToGallery(image.uri, image.index)}
+                  >
+                    <Text style={styles.saveImageButtonText}>💾 Save</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </View>
+        )} 
       </ScrollView>
+      {capturedImages && capturedImages.length > 0 && (
+        <View style={styles.stickyButtonContainer}>
+          <TouchableOpacity
+            style={[styles.button, styles.sendButton]}
+            onPress={handleSendBiometric}>
+            <Text style={styles.buttonText}>Send for verification</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {isRegistering && <LoadingOverlay />}
     </SafeAreaView>
   );
@@ -859,13 +1177,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   imageContainer: {
-    width: '48%',
+    width: '100%',
     marginBottom: 15,
     alignItems: 'center',
   },
   fingerprintImage: {
-    width: 120,
-    height: 120,
+    width: '100%',
+    height: 220,
     borderRadius: 8,
     backgroundColor: ColorPalettes.backgrounds.secondary,
     borderWidth: 1,
@@ -1092,13 +1410,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   instructionText: {
-    color: '#FFFFFF',
+    color: 'black',
     fontSize: 20,
     marginBottom: 10,
     fontWeight: '600',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    // textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    // textShadowOffset: { width: 1, height: 1 },
+    // textShadowRadius: 3,
   },
   dismissButton: {
     position: 'absolute',
@@ -1117,6 +1435,35 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  checklistItem: {
+    fontSize: 14,
+    color: ColorPalettes.text.dark,
+    marginVertical: 4,
+    paddingLeft: 10,
+  },
+  warningText: {
+    color: ColorPalettes.interactive.error,
+    marginTop: 10,
+    fontWeight: '500',
+  },
+  stickyButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: ColorPalettes.backgrounds.primary,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    shadowColor: ColorPalettes.shadows.primary,
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
   },
 });
 
