@@ -8,6 +8,7 @@ import {
   StatusBar,
   Animated,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { Camera, useCameraDevices } from 'react-native-vision-camera';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
@@ -48,6 +49,8 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   const [hasPermission, setHasPermission] = useState(cameraPermission === 'granted');
   const [isFocusing, setIsFocusing] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const camera = useRef<Camera>(null);
   const devices = useCameraDevices();
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -266,7 +269,8 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         setIsFocusing(false);
         setIsCapturing(false);
         dispatch(setError('Failed to capture biometric scan. Please try again.'));
-        Alert.alert('Capture Error', 'Failed to capture biometric scan. Please try again.');
+        setErrorMessage('Failed to capture biometric scan. Please try again.');
+        setShowErrorModal(true);
       }
     }
   };
@@ -389,9 +393,6 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         </View>
       </View>
     </View>
-
-
-
   );
 };
 

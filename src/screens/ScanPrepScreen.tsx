@@ -51,6 +51,22 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const pulseAnim = useState(new Animated.Value(1))[0];
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<{
+    isVerified: boolean;
+    name: string;
+    cnic: string;
+    fatherName: string;
+    confidence: number;
+    description: string;
+    cnicType: string;
+    dateOfExpiry: string;
+    dateOfIssue: string;
+    dateOfBirth: string;
+    gender: string;
+    husbandName: string;
+    referenceTag: string;
+  } | null>(null);
 
   // Create individual animation values for each thumbnail
   const thumbnailAnims = [
@@ -171,16 +187,16 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
             // check if the cnic match with the entered cnic
             console.log('loggedInUserDetail.cnic', loggedInUserDetail.cnic);
             console.log('result.cnic', result.cnic);
-            // if (result.cnic?.replace(/-/g, '') !== loggedInUserDetail.cnic?.toString()) {
-            //   Alert.alert(
-            //     'CNIC Verification Failed',
-            //     'The CNIC you entered does not match the CNIC on your ID card',
-            //     [{ text: 'OK' }],
-            //   );
-            //   dispatch(clearCapturedImages());
-            //   dispatch(setCurrentImageIndex(0));
-            //   return;
-            // }
+            if (result.cnic?.replace(/-/g, '') !== loggedInUserDetail.cnic?.toString()) {
+              Alert.alert(
+                'CNIC Verification Failed',
+                'The CNIC you entered does not match the CNIC on your ID card',
+                [{ text: 'OK' }],
+              );
+              dispatch(clearCapturedImages());
+              dispatch(setCurrentImageIndex(0));
+              return;
+            }
 
             // Save CNIC data to Redux store
             dispatch(
@@ -241,27 +257,22 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
                     );
                   }
 
-                  Alert.alert(
-                    isVerified ? 'Face Verification Successful' : 'Face Verification Failed',
-                    `CNIC Data Extracted Successfully!\n\nName: ${result.Name}\nCNIC: ${
-                      result.cnic
-                    }\nFather: ${result.father_name}\n\nFace Verification: ${
-                      isVerified ? 'PASSED ✓' : 'FAILED ✗'
-                    }\nConfidence: ${confidence.toFixed(2)}%\n\n${verificationResult.desc || ''}`,
-                    [
-                      {
-                        text: 'OK',
-                        onPress: () => {
-                          isVerified
-                            ? (navigation.goBack(),
-                              dispatch(clearCapturedImages()),
-                              dispatch(setCurrentImageIndex(0)))
-                            : dispatch(clearCapturedImages());
-                          dispatch(setCurrentImageIndex(0));
-                        },
-                      },
-                    ],
-                  );
+                  setVerificationResult({
+                    isVerified,
+                    name: result.Name || '',
+                    cnic: result.cnic || '',
+                    fatherName: result.father_name || '',
+                    confidence,
+                    description: verificationResult.desc || '',
+                    cnicType: result.cnic_type || '',
+                    dateOfExpiry: result.dexp || '',
+                    dateOfIssue: result.disu || '',
+                    dateOfBirth: result.dob || '',
+                    gender: result.gender || '',
+                    husbandName: result.husband_name || '',
+                    referenceTag: result.reference_tag || '',
+                  });
+                  setShowVerificationModal(true);
                 } catch (verificationError: any) {
                   console.error('Face verification error:', verificationError);
                   Alert.alert(
@@ -521,6 +532,128 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
       </ScrollView>
 
       {isProcessing && <LoadingOverlay />}
+
+      {/* Verification Result Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showVerificationModal}
+        onRequestClose={() => setShowVerificationModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={[
+              styles.modalTitle,
+              { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' }
+            ]}>
+              {verificationResult?.isVerified ? 'Face Verification Successful' : 'Face Verification Failed'}
+            </Text>
+            
+            <View style={styles.modalBody}>
+              <Text style={styles.modalSectionTitle}>CNIC Data Extracted Successfully!</Text>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Name:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.name}</Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>CNIC:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.cnic}</Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Father:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.fatherName}</Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Date of Birth:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.dateOfBirth}</Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Gender:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.gender}</Text>
+              </View>
+              
+              {verificationResult?.husbandName && (
+                <View style={styles.modalDataRow}>
+                  <Text style={styles.modalDataLabel}>Husband:</Text>
+                  <Text style={styles.modalDataValue}>{verificationResult?.husbandName}</Text>
+                </View>
+              )}
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>CNIC Type:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.cnicType}</Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Date of Issue:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.dateOfIssue}</Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Date of Expiry:</Text>
+                <Text style={styles.modalDataValue}>{verificationResult?.dateOfExpiry}</Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Face Verification:</Text>
+                <Text style={[
+                  styles.modalDataValue,
+                  { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' }
+                ]}>
+                  {verificationResult?.isVerified ? 'PASSED ✓' : 'FAILED ✗'}
+                </Text>
+              </View>
+              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Confidence:</Text>
+                <Text style={[
+                  styles.modalDataValue,
+                  { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' }
+                ]}>
+                  {verificationResult?.confidence.toFixed(2)}%
+                </Text>
+              </View>
+              
+              {/* Conditional content based on verification status */}
+              {verificationResult?.isVerified ? (
+                <View style={[styles.modalDescriptionContainer, { backgroundColor: '#E8F5E8', borderColor: '#4CAF50' }]}>
+                  <Text style={[styles.modalDescription, { color: '#2E7D32' }]}>
+                    ✓ Verification successful! Your identity has been confirmed.
+                    {verificationResult?.description && `\n\n${verificationResult.description}`}
+                  </Text>
+                </View>
+              ) : (
+                <View style={[styles.modalDescriptionContainer, { backgroundColor: '#FFEBEE', borderColor: '#F44336' }]}>
+                  <Text style={[styles.modalDescription, { color: '#C62828' }]}>
+                    ✗ Verification failed. Please try again with a clearer image.
+                    {verificationResult?.description && `\n\n${verificationResult.description}`}
+                  </Text>
+                </View>
+              )}
+            </View>
+            
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setShowVerificationModal(false);
+                verificationResult?.isVerified
+                  ? (navigation.goBack(),
+                    dispatch(clearCapturedImages()),
+                    dispatch(setCurrentImageIndex(0)))
+                  : dispatch(clearCapturedImages());
+                dispatch(setCurrentImageIndex(0));
+              }}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -787,6 +920,92 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: ColorPalettes.text.primary,
     fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: ColorPalettes.backgrounds.primary,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    maxWidth: '90%',
+    minWidth: 320,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalBody: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  modalSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: ColorPalettes.text.primary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalDataRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  modalDataLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: ColorPalettes.text.secondary,
+    flex: 1,
+  },
+  modalDataValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: ColorPalettes.text.primary,
+    flex: 2,
+    textAlign: 'right',
+  },
+  modalDescriptionContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: ColorPalettes.backgrounds.secondary,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: ColorPalettes.borders.light,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: ColorPalettes.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalButton: {
+    backgroundColor: '#1E2772',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 100,
+  },
+  modalButtonText: {
+    color: ColorPalettes.text.light,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

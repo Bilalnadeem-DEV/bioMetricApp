@@ -32,6 +32,17 @@ interface UserVerificationResponse {
   valid_frames?: number;
 }
 
+interface LivenessDetectionResponse {
+  code: number;
+  message: string;
+  real_flag: boolean;
+  liveness_score: number;
+  face_detected: boolean;
+  brightness_passed: boolean;
+  background_passed: boolean;
+  posture_passed: boolean;
+}
+
 interface CNICImageData {
   front_image?: string | null;
   back_image?: string | null;
@@ -194,6 +205,71 @@ class CNICVerificationService {
       }
       
       throw new Error(error.response?.data?.error || error.message || 'User verification failed');
+    }
+  }
+
+  async detectLiveness(frameUris: string[]): Promise<LivenessDetectionResponse> {
+    try {
+      const livenessApiUrl = 'http://198.199.81.112/api/liveness_detector';
+      console.log('Liveness Detection API URL:', livenessApiUrl);
+      console.log('Platform:', Platform.OS);
+      console.log('Frame count:', frameUris.length);
+      
+      const formData = new FormData();
+      
+      // Add frame count
+      formData.append('frame_count', frameUris.length.toString());
+      
+      // Add each frame image
+      frameUris.forEach((frameUri, index) => {
+        const file = this.createFileObject(frameUri, `frame${index}`);
+        formData.append(`frame${index}`, file as any);
+        console.log(`Added frame${index} to FormData`);
+      });
+      
+      console.log('Liveness detection FormData created, sending request...');
+
+      const response: AxiosResponse<LivenessDetectionResponse> = await api.post(
+        livenessApiUrl,
+        formData,
+        {
+          headers: Platform.select({
+            android: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json',
+            },
+            ios: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json',
+            },
+            default: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json',
+            }
+          }),
+          timeout: 120000, // 2 minutes timeout for liveness detection
+        }
+      );
+
+      console.log('Liveness Detection API Response received:', response.status);
+      console.log('Liveness Detection Response data:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Liveness Detection error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: 'http://198.199.81.112/api/liveness_detector',
+        platform: Platform.OS
+      });
+      
+      // Handle specific Android errors
+      if (Platform.OS === 'android' && error.response?.status === 413) {
+        throw new Error('Frame images too large for Android. Please use smaller images or compress them further.');
+      }
+      
+      throw new Error(error.response?.data?.message || error.message || 'Liveness detection failed');
     }
   }
 }

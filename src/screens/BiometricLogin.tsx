@@ -104,7 +104,7 @@ const BiometricLogin: React.FC<BiometricLoginProps> = ({ navigation }) => {
     setShowInstructions(true);
   }, [dispatch]);
 
-  const configg = {
+  const config = {
     licenseKey: '9KM2-DLW6-E8VY-ADFI',
     numberFingersToCapture: 4,
     captureType: scanConfig.captureType,
@@ -213,7 +213,7 @@ const BiometricLogin: React.FC<BiometricLoginProps> = ({ navigation }) => {
     },
   };
 
-  const config = {
+  const configg = {
     licenseKey: '9KM2-DLW6-E8VY-ADFI',
     numberFingersToCapture: 4,
     captureType: 'LEFT_HAND_FINGERS',

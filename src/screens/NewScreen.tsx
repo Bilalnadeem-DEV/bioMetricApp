@@ -60,6 +60,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const { CNIC, name, firstName, lastName, dateOfBirth } = useAppSelector(state => state.user);
   const [showInstructions, setShowInstructions] = useState(true);
+  const scanConfig = useAppSelector(state => state.scan);
 
   useEffect(() => {     
     // setShowInstructions(true)
@@ -81,45 +82,155 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     loadSDK();
   }, [dispatch]);
 
+  // const config = {
+  //   licenseKey: '9KM2-DLW6-E8VY-ADFI',
+  //   numberFingersToCapture: 4,
+  //   captureType: 'LEFT_HAND_FINGERS',
+  //   outputType: 'CAPTURE_AND_SEGMENTATION',
+  //   timeToCapture: 1,
+  //   overlayColor: ColorPalettes.transparent.black30,
+  //   imageQuality: {
+  //     compressionQuality: 100,
+  //     imageFormat: 'PNG',
+  //     enableHighResolution: true,
+  //     antiAliasing: true,
+  //   },
+  //   cameraSettings: {
+  //     focusMode: 'auto',
+  //     exposureMode: 'auto',
+  //     whiteBalanceMode: 'auto',
+  //     stabilization: true,
+  //     highQualityMode: true,
+  //   },
+  //   processingSettings: {
+  //     enableNoiseReduction: true,
+  //     enableSharpening: true,
+  //     contrastEnhancement: true,
+  //     brightnessAdjustment: 'auto',
+  //     qualityThreshold: 80,
+  //   },
+
+  //   captureCountdown: {
+  //     enabled: true,
+  //     backgroundColor: ColorPalettes.transparent.black20,
+  //     progressColor: ColorPalettes.semantic.fingerprint,
+  //     textColor: ColorPalettes.text.light,
+  //     countdownDuration: 2,
+  //   },
+  //   backButton: {
+  //     enabled: true,
+  //     backgroundColor: ColorPalettes.transparent.clear,
+  //     buttonPadding: 20,
+  //     buttonSize: { width: 56, height: 56 },
+  //     iconOptions: {
+  //       enabled: true,
+  //       iconFile: 'fingerprintsdk_ic_close',
+  //       iconColor: ColorPalettes.text.light,
+  //       iconSize: { width: 32, height: 32 },
+  //     },
+  //     labelOptions: {
+  //       enabled: false,
+  //       content: 'Back',
+  //       textColor: ColorPalettes.text.light,
+  //       textSize: 14,
+  //     },
+  //   },
+  //   helpText: {
+  //     enabled: true,
+  //     messages: {
+  //       leftHandMessage: 
+  //         'Place your left hand (without thumb)\nUse the optimal lighting conditions.',
+  //       rightHandMessage:
+  //         'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
+  //       thumbsMessage:
+  //         'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
+  //     },
+  //     textColor: ColorPalettes.text.light,
+  //     textSize: 20,      
+  //   },
+  //   fingerEllipse: {
+  //     enabled: true,
+  //     // ellipseColor: ColorPalettes.semantic.fingerprint + '80',
+  //     thickness: 3,
+  //   },
+  //   distanceIndicator: {
+  //     enabled: true,
+  //     selectedBarColor: ColorPalettes.semantic.fingerprint,
+  //     unselectedBarColor: ColorPalettes.text.light,
+  //     arrowColor: ColorPalettes.semantic.fingerprint,
+  //     sensitivity: 'medium',
+  //     tooCloseText: {
+  //       enabled: true,
+  //       content: 'Too close',
+  //       textColor: ColorPalettes.interactive.error,
+  //       textSize: 16,
+  //     },
+  //     tooFarText: {
+  //       enabled: true,
+  //       content: 'Too far',
+  //       textColor: ColorPalettes.interactive.error,
+  //       textSize: 16,
+  //     },
+  //     perfectDistanceText: {
+  //       enabled: true,
+  //       content: 'Perfect distance - hold steady!',
+  //       textColor: ColorPalettes.interactive.success,
+  //       textSize: 16,
+  //     },
+  //   },
+  //   motionDetection: {
+  //     enabled: true,
+  //     sensitivity: 'low',
+  //     stabilizationTime: 1,
+  //     motionThreshold: 1.0,
+  //   },
+  //   qualityValidation: {
+  //     enabled: true,
+  //     minimumQualityScore: 75,
+  //     rejectBlurryImages: true,
+  //     rejectLowContrastImages: true,
+  //     enableQualityFeedback: true,
+  //   },
+  // };
+
   const config = {
     licenseKey: '9KM2-DLW6-E8VY-ADFI',
     numberFingersToCapture: 4,
-    captureType: 'LEFT_HAND_FINGERS',
-    outputType: 'CAPTURE_AND_SEGMENTATION',
-    timeToCapture: 1,
-    overlayColor: ColorPalettes.transparent.black30,
+    captureType: scanConfig.captureType,
+    outputType: scanConfig.outputType,
+    timeToCapture: scanConfig.timeToCapture,
+    overlayColor: scanConfig.overlayColor,
     imageQuality: {
-      compressionQuality: 100,
-      imageFormat: 'PNG',
-      enableHighResolution: true,
-      antiAliasing: true,
+      compressionQuality: scanConfig.imageQuality.compressionQuality,
+      imageFormat: scanConfig.imageQuality.imageFormat,
+      enableHighResolution: scanConfig.imageQuality.enableHighResolution,
+      antiAliasing: scanConfig.imageQuality.antiAliasing,
     },
     cameraSettings: {
-      focusMode: 'auto',
-      exposureMode: 'auto',
-      whiteBalanceMode: 'auto',
-      stabilization: true,
-      highQualityMode: true,
+      focusMode: scanConfig.cameraSettings.focusMode,
+      exposureMode: scanConfig.cameraSettings.exposureMode,
+      whiteBalanceMode: scanConfig.cameraSettings.whiteBalanceMode,
+      stabilization: scanConfig.cameraSettings.stabilization,
+      highQualityMode: scanConfig.cameraSettings.highQualityMode,
     },
     processingSettings: {
-      enableNoiseReduction: true,
-      enableSharpening: true,
-      contrastEnhancement: true,
-      brightnessAdjustment: 'auto',
-      qualityThreshold: 80,
+      enableNoiseReduction: scanConfig.processingSettings.enableNoiseReduction,
+      enableSharpening: scanConfig.processingSettings.enableSharpening,
+      contrastEnhancement: scanConfig.processingSettings.contrastEnhancement,
+      brightnessAdjustment: scanConfig.processingSettings.brightnessAdjustment,
+      qualityThreshold: scanConfig.processingSettings.qualityThreshold,
     },
-
     captureCountdown: {
-      enabled: true,
-      backgroundColor: ColorPalettes.transparent.black20,
-      progressColor: ColorPalettes.semantic.fingerprint,
-      textColor: ColorPalettes.text.light,
-      countdownDuration: 2,
+      enabled: scanConfig.captureCountdown.enabled,
+      backgroundColor: scanConfig.captureCountdown.backgroundColor,
+      progressColor: scanConfig.captureCountdown.progressColor,
+      textColor: scanConfig.captureCountdown.textColor,
+      countdownDuration: scanConfig.captureCountdown.countdownDuration,
     },
     backButton: {
-      enabled: true,
-      backgroundColor: ColorPalettes.transparent.clear,
-      buttonPadding: 20,
+      enabled: scanConfig.backButton.enabled,
+      backgroundColor: scanConfig.backButton.backgroundColor,
+      buttonPadding: scanConfig.backButton.buttonPadding,
       buttonSize: { width: 56, height: 56 },
       iconOptions: {
         enabled: true,
@@ -135,29 +246,28 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       },
     },
     helpText: {
-      enabled: true,
+      enabled: scanConfig.helpText.enabled,
       messages: {
         leftHandMessage: 
-          'Place your left hand (without thumb)\nUse the optimal lighting conditions.',
+          'Place your left hand (without thumb)\nuntil the marker is centered.',
         rightHandMessage:
           'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
         thumbsMessage:
           'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
       },
-      textColor: ColorPalettes.text.light,
-      textSize: 20,      
+      textColor: scanConfig.helpText.textColor,
+      textSize: scanConfig.helpText.textSize,      
     },
     fingerEllipse: {
-      enabled: true,
-      // ellipseColor: ColorPalettes.semantic.fingerprint + '80',
-      thickness: 3,
+      enabled: scanConfig.fingerEllipse.enabled,
+      thickness: scanConfig.fingerEllipse.thickness,
     },
     distanceIndicator: {
-      enabled: true,
-      selectedBarColor: ColorPalettes.semantic.fingerprint,
-      unselectedBarColor: ColorPalettes.text.light,
-      arrowColor: ColorPalettes.semantic.fingerprint,
-      sensitivity: 'medium',
+      enabled: scanConfig.distanceIndicator.enabled,
+      selectedBarColor: scanConfig.distanceIndicator.selectedBarColor,
+      unselectedBarColor: scanConfig.distanceIndicator.unselectedBarColor,
+      arrowColor: scanConfig.distanceIndicator.arrowColor,
+      sensitivity: scanConfig.distanceIndicator.sensitivity,
       tooCloseText: {
         enabled: true,
         content: 'Too close',
@@ -178,17 +288,17 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       },
     },
     motionDetection: {
-      enabled: true,
-      sensitivity: 'low',
-      stabilizationTime: 1,
-      motionThreshold: 1.0,
+      enabled: scanConfig.motionDetection.enabled,
+      sensitivity: scanConfig.motionDetection.sensitivity,
+      stabilizationTime: scanConfig.motionDetection.stabilizationTime,
+      motionThreshold: scanConfig.motionDetection.motionThreshold,
     },
     qualityValidation: {
-      enabled: true,
-      minimumQualityScore: 75,
-      rejectBlurryImages: true,
-      rejectLowContrastImages: true,
-      enableQualityFeedback: true,
+      enabled: scanConfig.qualityValidation.enabled,
+      minimumQualityScore: scanConfig.qualityValidation.minimumQualityScore,
+      rejectBlurryImages: scanConfig.qualityValidation.rejectBlurryImages,
+      rejectLowContrastImages: scanConfig.qualityValidation.rejectLowContrastImages,
+      enableQualityFeedback: scanConfig.qualityValidation.enableQualityFeedback,
     },
   };
 
