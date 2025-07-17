@@ -209,8 +209,9 @@ class CNICVerificationService {
   }
 
   async detectLiveness(frameUris: string[]): Promise<LivenessDetectionResponse> {
+    const livenessApiUrl = CNIC_VERIFICATION_URL + 'liveness_detector';
     try {
-      const livenessApiUrl = 'http://198.199.81.112/api/liveness_detector';
+      const livenessApiUrl = CNIC_VERIFICATION_URL + 'liveness_detector';
       console.log('Liveness Detection API URL:', livenessApiUrl);
       console.log('Platform:', Platform.OS);
       console.log('Frame count:', frameUris.length);
@@ -260,7 +261,7 @@ class CNICVerificationService {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        url: 'http://198.199.81.112/api/liveness_detector',
+        url: livenessApiUrl,
         platform: Platform.OS
       });
       

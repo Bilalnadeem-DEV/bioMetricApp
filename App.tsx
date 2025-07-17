@@ -25,6 +25,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import BiometricLogin from './src/screens/BiometricLogin';
 import CameraScreenAndroid from './src/screens/CameraScreenAndroid';
 import TunerScreen from './src/screens/TunerScreen';
+import SignupInstructionScreen from './src/screens/SignupInstructionScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -38,6 +39,7 @@ export type RootStackParamList = {
   Login: undefined;
   BiometricLogin: undefined;  
   Tuner: undefined;
+  SignupInstruction: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -132,6 +134,13 @@ function App(): React.JSX.Element {
               component={TunerScreen}
               listeners={{
                 focus: () => console.log('TunerScreen focused'),
+              }}
+            />
+            <Stack.Screen 
+              name="SignupInstruction" 
+              component={SignupInstructionScreen}
+              listeners={{
+                focus: () => console.log('SignupInstructionScreen focused'),
               }}
             />
           </Stack.Navigator>

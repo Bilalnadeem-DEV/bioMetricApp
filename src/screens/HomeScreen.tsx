@@ -19,7 +19,7 @@ import {
   setUserRegistered,
   setResetLoggedInUserDetail,
 } from '../store/slices/userSlice';
-import { clearBiometricData } from '../store/slices/biometricSlice';
+import { clearBiometricData, clearCapturedImages, setCurrentImageIndex } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
@@ -38,8 +38,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, [dispatch]);
 
   const handleRegister = () => {
-    console.log('Navigating to Register screen');
-    navigation.navigate('Register');
+    dispatch(clearCapturedImages())
+    dispatch(setCurrentImageIndex(0))      
+    navigation.navigate('SignupInstruction');
+    // navigation.navigate('ScanPrep');
   };
 
   const handleLogout = () => {
@@ -75,11 +77,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         )}
-        <View style={styles.tunerContainer}>
+        {/* <View style={styles.tunerContainer}>
             <TouchableOpacity style={styles.tunerButton} onPress={() => navigation.navigate('Tuner')}>
               <Text style={styles.tunerButtonText}>Tuner</Text>
             </TouchableOpacity>
-          </View>       
+          </View>        */}
         <View style={styles.content}>
           <View style={styles.topSection}>
             <View style={styles.logoContainer}>
@@ -99,7 +101,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </Text>
               </View>
             )}
-            {isRegistered && !loggedInUserDetail.is_verified ? (
+            {/* {isRegistered && !loggedInUserDetail.is_verified ? (
               <View style={styles.buttonContainer}>
                 <Text
                   style={{
@@ -114,7 +116,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   scanning your ID card.
                 </Text>
               </View>
-            ): <></>}
+            ): <></>} */}
             {isRegistered && (
               <View style={styles.userDetailsContainer}>
                 <Text style={styles.userDetailText}>
@@ -122,25 +124,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   {loggedInUserDetail.cnic}
                 </Text>
                 <Text style={styles.userDetailText}>
-                  <Text style={styles.labelText}>First Name: </Text>
+                  <Text style={styles.labelText}>Name: </Text>
                   {loggedInUserDetail.firstName}
                 </Text>
                 <Text style={styles.userDetailText}>
-                  <Text style={styles.labelText}>Last Name: </Text>
+                  <Text style={styles.labelText}>Fathers Name: </Text>
                   {loggedInUserDetail.lastName}
                 </Text>
                 <Text style={styles.userDetailText}>
                   <Text style={styles.labelText}>Date of Birth: </Text>
                   {loggedInUserDetail.dateOfBirth}
                 </Text>
-                <Text style={styles.userDetailText}>
+                {/* <Text style={styles.userDetailText}>
                   <Text style={styles.labelText}>CNIC Verified: </Text>
                   {loggedInUserDetail.is_verified ? 'Yes' : 'No'}
-                </Text>
+                </Text> */}
                 
               </View>
             )}
-          </View>              
+          </View>
           {!isRegistered ? (
           // {false ? (
             <View style={styles.buttonContainer}>
@@ -155,15 +157,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <Text style={styles.buttonText}>Login</Text>
               </TouchableOpacity>
             </View>
-          ) : (
-            !loggedInUserDetail.is_verified ? (
-              <TouchableOpacity
-              style={[styles.button, styles.newScreenButton]}
-              onPress={() => navigation.navigate('ScanPrep')}>
-              <Text style={styles.buttonText}>CNIC Verification</Text>
-            </TouchableOpacity>
-            ): <></>           
-          )}
+          ): <></>}
         </View>
       </ScrollView>
     </SafeAreaView>

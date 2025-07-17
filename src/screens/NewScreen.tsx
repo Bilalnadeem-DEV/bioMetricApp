@@ -59,6 +59,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const [fingerprintSDK, setFingerprintSDK] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const { CNIC, name, firstName, lastName, dateOfBirth } = useAppSelector(state => state.user);
+  const { cnicData } = useAppSelector(state => state.biometric);
   const [showInstructions, setShowInstructions] = useState(true);
   const scanConfig = useAppSelector(state => state.scan);
 
@@ -661,6 +662,19 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     // Format the date as YYYY-MM-DD
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
+  
+  function convertDotToSlashDate(dateStr: string) {
+    if (!/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+      throw new Error('Invalid date format. Expected format: DD.MM.YYYY');
+    }
+  
+    const [day, month, year] = dateStr.split('.');
+    return `${year}-${month}-${day}`;
+  }
+
+  function removeDashes(input: string) {
+    return input.replace(/-/g, '');
+  }
 
   const handleSendBiometric = async () => {
     if (!capturedImages || capturedImages.length < 4) {
@@ -676,7 +690,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       // Validate date of birth first
       let formattedDOB;
       try {
-        formattedDOB = convertToISODate(dateOfBirth);
+        formattedDOB = convertDotToSlashDate(cnicData?.dateOfBirth || '');
       } catch (error) {
         Alert.alert(
           'Invalid Date of Birth',
@@ -695,9 +709,9 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       };
 
       const userData = {
-        cnic: CNIC,
-        first_name: firstName,
-        last_name: lastName,
+        cnic: removeDashes(cnicData?.cnic || ''),
+        first_name: cnicData?.name || '',
+        last_name: cnicData?.fatherName || '',
         date_of_birth: formattedDOB,
         ...fingerMap,
       };

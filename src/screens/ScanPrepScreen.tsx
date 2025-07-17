@@ -106,7 +106,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [pulseAnim]);
 
   const handleThumbnailPress = (index: number) => {
-    dispatch(setCurrentImageIndex(index));    
+    dispatch(setCurrentImageIndex(index));
 
     navigation.navigate(Platform.OS === 'android' ? 'CameraAndroid' : 'Camera', {
       imageIndex: index,
@@ -147,19 +147,51 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
         // Get the CNIC front image (index 0)
         const cnicFrontImage = capturedImages.find(img => img.index === 0);
 
-        console.log(
-          'Available images:',
-          capturedImages.map(img => ({ index: img.index, hasUri: !!img.uri })),
-        );
-        console.log(
-          'CNIC Front image found:',
-          !!cnicFrontImage,
-          'at index:',
-          cnicFrontImage?.index,
-        );
-
         if (cnicFrontImage?.uri) {
           console.log('Processing CNIC front image...');
+
+          // check for liven essconst cnicFrontImage1 = capturedImages.find(img => img.index === 2);
+          const cnicFrontImage1 = capturedImages.find(img => img.index === 2);
+          const compressedImage1 = await ImageResizer.createResizedImage(
+            cnicFrontImage1?.uri || '',
+            1024, // Better resolution for OCR text recognition
+            1024, // Better resolution for OCR text recognition
+            'JPEG', // PNG format for better quality
+            100, // PNG doesn't use quality parameter, but set to 100
+            0,
+            undefined,
+            false,
+            { mode: 'contain' },
+          );
+
+          // detectLiveness check for liveness here
+          const selfieImage = capturedImages.find(img => img.index === 2);
+          if (selfieImage?.uri) {
+            const livenessResult = await cnicVerificationService.detectLiveness([
+              compressedImage1?.uri || '',
+            ]);
+            console.log('Liveness Result:', livenessResult);
+
+            if (livenessResult.code != 0) {
+              // Real person detected, clear selfie and ask to retake
+              console.log('Liveness check failed - detected real person');
+              setIsProcessing(false);
+
+              // Remove all captured images
+              dispatch(clearCapturedImages());
+              dispatch(setCurrentImageIndex(0));
+
+              // Show alert to user
+              Alert.alert(
+                'Retake Selfie Required',
+                'Please capture your selfie again to continue with verification.',
+                [{ text: 'OK' }],
+              );
+
+              // Exit early to prevent further processing
+              return;
+            }
+          }
 
           // Compress image to balance quality and file size for OCR
           const compressedImage = await ImageResizer.createResizedImage(
@@ -185,18 +217,6 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
 
           if (result.type === 'True') {
             // check if the cnic match with the entered cnic
-            console.log('loggedInUserDetail.cnic', loggedInUserDetail.cnic);
-            console.log('result.cnic', result.cnic);
-            if (result.cnic?.replace(/-/g, '') !== loggedInUserDetail.cnic?.toString()) {
-              Alert.alert(
-                'CNIC Verification Failed',
-                'The CNIC you entered does not match the CNIC on your ID card',
-                [{ text: 'OK' }],
-              );
-              dispatch(clearCapturedImages());
-              dispatch(setCurrentImageIndex(0));
-              return;
-            }
 
             // Save CNIC data to Redux store
             dispatch(
@@ -244,18 +264,6 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
                   // Check if verification was successful (code: '1' means success)
                   const isVerified = verificationResult.code === '1';
                   const confidence = verificationResult.average_confidence || 0;
-
-                  // if verification is successful, update the user verification status
-                  if (isVerified) {
-                    biometricService.updateUserVerification(loggedInUserDetail.cnic, true);
-
-                    dispatch(
-                      setLoggedInUserDetail({
-                        ...loggedInUserDetail,
-                        is_verified: true,
-                      }),
-                    );
-                  }
 
                   setVerificationResult({
                     isVerified,
@@ -538,97 +546,118 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
         animationType="fade"
         transparent={true}
         visible={showVerificationModal}
-        onRequestClose={() => setShowVerificationModal(false)}
-      >
+        onRequestClose={() => setShowVerificationModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={[
-              styles.modalTitle,
-              { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' }
-            ]}>
-              {verificationResult?.isVerified ? 'Face Verification Successful' : 'Face Verification Failed'}
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' },
+              ]}>
+              {verificationResult?.isVerified
+                ? 'Face Verification Successful'
+                : 'Face Verification Failed'}
             </Text>
-            
+
             <View style={styles.modalBody}>
               <Text style={styles.modalSectionTitle}>CNIC Data Extracted Successfully!</Text>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Name:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.name}</Text>
               </View>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>CNIC:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.cnic}</Text>
               </View>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Father:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.fatherName}</Text>
               </View>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Date of Birth:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.dateOfBirth}</Text>
               </View>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Gender:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.gender}</Text>
               </View>
-              
+
               {verificationResult?.husbandName && (
                 <View style={styles.modalDataRow}>
                   <Text style={styles.modalDataLabel}>Husband:</Text>
                   <Text style={styles.modalDataValue}>{verificationResult?.husbandName}</Text>
                 </View>
               )}
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>CNIC Type:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.cnicType}</Text>
               </View>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Date of Issue:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.dateOfIssue}</Text>
               </View>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Date of Expiry:</Text>
                 <Text style={styles.modalDataValue}>{verificationResult?.dateOfExpiry}</Text>
               </View>
-              
+              <View style={styles.modalDataRow}>
+                <Text style={styles.modalDataLabel}>Liveness Check:</Text>
+                <Text
+                  style={[
+                    styles.modalDataValue,
+                    { color: '#4CAF50'},
+                  ]}>
+                  {'PASSED ✓'}
+                </Text>
+              </View>
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Face Verification:</Text>
-                <Text style={[
-                  styles.modalDataValue,
-                  { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' }
-                ]}>
+                <Text
+                  style={[
+                    styles.modalDataValue,
+                    { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' },
+                  ]}>
                   {verificationResult?.isVerified ? 'PASSED ✓' : 'FAILED ✗'}
                 </Text>
               </View>
-              
+
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Confidence:</Text>
-                <Text style={[
-                  styles.modalDataValue,
-                  { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' }
-                ]}>
+                <Text
+                  style={[
+                    styles.modalDataValue,
+                    { color: verificationResult?.isVerified ? '#4CAF50' : '#F44336' },
+                  ]}>
                   {verificationResult?.confidence.toFixed(2)}%
                 </Text>
               </View>
-              
+
               {/* Conditional content based on verification status */}
               {verificationResult?.isVerified ? (
-                <View style={[styles.modalDescriptionContainer, { backgroundColor: '#E8F5E8', borderColor: '#4CAF50' }]}>
+                <View
+                  style={[
+                    styles.modalDescriptionContainer,
+                    { backgroundColor: '#E8F5E8', borderColor: '#4CAF50' },
+                  ]}>
                   <Text style={[styles.modalDescription, { color: '#2E7D32' }]}>
                     ✓ Verification successful! Your identity has been confirmed.
                     {verificationResult?.description && `\n\n${verificationResult.description}`}
                   </Text>
                 </View>
               ) : (
-                <View style={[styles.modalDescriptionContainer, { backgroundColor: '#FFEBEE', borderColor: '#F44336' }]}>
+                <View
+                  style={[
+                    styles.modalDescriptionContainer,
+                    { backgroundColor: '#FFEBEE', borderColor: '#F44336' },
+                  ]}>
                   <Text style={[styles.modalDescription, { color: '#C62828' }]}>
                     ✗ Verification failed. Please try again with a clearer image.
                     {verificationResult?.description && `\n\n${verificationResult.description}`}
@@ -636,20 +665,21 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
                 </View>
               )}
             </View>
-            
+
             <TouchableOpacity
               style={styles.modalButton}
               onPress={() => {
+                // setShowVerificationModal(false),
+                // navigation.navigate('NewScreen')
                 setShowVerificationModal(false);
                 verificationResult?.isVerified
-                  ? (navigation.goBack(),
+                  ? (navigation.replace('NewScreen'),
                     dispatch(clearCapturedImages()),
                     dispatch(setCurrentImageIndex(0)))
                   : dispatch(clearCapturedImages());
                 dispatch(setCurrentImageIndex(0));
-              }}
-            >
-              <Text style={styles.modalButtonText}>OK</Text>
+              }}>
+              <Text style={styles.modalButtonText}>Move to next step of verification</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -831,7 +861,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 20,
     borderRadius: 16,
-    borderColor: ColorPalettes.borders.light,  
+    borderColor: ColorPalettes.borders.light,
   },
   progressTitle: {
     fontSize: 16,
