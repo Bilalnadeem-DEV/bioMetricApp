@@ -3668,6 +3668,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"buffer@npm:^6.0.3":
+  version: 6.0.3
+  resolution: "buffer@npm:6.0.3"
+  dependencies:
+    base64-js: ^1.3.1
+    ieee754: ^1.2.1
+  checksum: 5ad23293d9a731e4318e420025800b42bf0d264004c0286c8cc010af7a270c7a0f6522e84f54b9ad65cbd6db20b8badbfd8d2ebf4f80fa03dab093b89e68c3f9
+  languageName: node
+  linkType: hard
+
 "bytes@npm:3.1.2":
   version: 3.1.2
   resolution: "bytes@npm:3.1.2"
@@ -5605,7 +5615,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ieee754@npm:^1.1.13":
+"ieee754@npm:^1.1.13, ieee754@npm:^1.2.1":
   version: 1.2.1
   resolution: "ieee754@npm:1.2.1"
   checksum: 5144c0c9815e54ada181d80a0b810221a253562422e7c6c3a60b1901154184f49326ec239d618c416c1c5945a2e197107aee8d986a3dd836b53dffefd99b5e7e
@@ -6203,6 +6213,7 @@ __metadata:
     axios: ^1.10.0
     eslint: ^8.19.0
     jest: ^29.6.3
+    onnxruntime-react-native: ^1.22.0
     prettier: ^2.8.8
     react: 19.1.0
     react-native: 0.80.0
@@ -7710,6 +7721,26 @@ __metadata:
   dependencies:
     mimic-fn: ^2.1.0
   checksum: 2478859ef817fc5d4e9c2f9e5728512ddd1dbc9fb7829ad263765bb6d3b91ce699d6e2332eef6b7dff183c2f490bd3349f1666427eaba4469fba0ac38dfd0d34
+  languageName: node
+  linkType: hard
+
+"onnxruntime-common@npm:1.22.0":
+  version: 1.22.0
+  resolution: "onnxruntime-common@npm:1.22.0"
+  checksum: 8555bcd18e6b33b2627c1acf63b875cfcfb66e588f017ee6fab09d96935c2fdfb9846a53a5fc0443c458abcb508de5b37b4d5e600fd9ac42fd92f8a461eb1bdc
+  languageName: node
+  linkType: hard
+
+"onnxruntime-react-native@npm:^1.22.0":
+  version: 1.22.0
+  resolution: "onnxruntime-react-native@npm:1.22.0"
+  dependencies:
+    buffer: ^6.0.3
+    onnxruntime-common: 1.22.0
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 600ba585c45cc49c9787d9b9fa10a033f08b01643f0e6bea66eeb2f071cc08cf02b601fa3db418a74920fdf819bc45ff8a8459f16acb2462937e21716dd1a8c8
   languageName: node
   linkType: hard
 

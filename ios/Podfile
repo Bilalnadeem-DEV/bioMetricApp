@@ -16,6 +16,8 @@ end
 
 target 'jazzBioApp' do
   config = use_native_modules!
+  use_frameworks!
+  pod 'onnxruntime-c'
 
   use_react_native!(
     :path => config[:reactNativePath],

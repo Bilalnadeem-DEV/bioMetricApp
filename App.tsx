@@ -26,6 +26,7 @@ import BiometricLogin from './src/screens/BiometricLogin';
 import CameraScreenAndroid from './src/screens/CameraScreenAndroid';
 import TunerScreen from './src/screens/TunerScreen';
 import SignupInstructionScreen from './src/screens/SignupInstructionScreen';
+import LocalModelPOC from './src/screens/LocalModelPOC';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -40,6 +41,7 @@ export type RootStackParamList = {
   BiometricLogin: undefined;  
   Tuner: undefined;
   SignupInstruction: undefined;
+  LocalModelPOC: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -141,6 +143,13 @@ function App(): React.JSX.Element {
               component={SignupInstructionScreen}
               listeners={{
                 focus: () => console.log('SignupInstructionScreen focused'),
+              }}
+            />
+            <Stack.Screen 
+              name="LocalModelPOC" 
+              component={LocalModelPOC}
+              listeners={{
+                focus: () => console.log('LocalModelPOC focused'),
               }}
             />
           </Stack.Navigator>

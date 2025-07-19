@@ -24,6 +24,7 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@tensorflow/tfjs-react-native": "^1.0.0",
     "axios": "^1.10.0",
+    "onnxruntime-react-native": "^1.22.0",
     "react": "19.1.0",
     "react-native": "0.80.0",
     "react-native-camera": "^4.2.1",
