@@ -219,6 +219,11 @@ const biometricSlice = createSlice({
     clearCapturedImages: (state) => {
       state.capturedImages = initialState.capturedImages;
     },
+    removeLastCapturedImage: (state) => {
+      if (state.capturedImages.length > 0) {
+        state.capturedImages.pop();
+      }
+    },
     setCurrentImageIndex: (state, action: PayloadAction<number>) => {
       state.currentImageIndex = action.payload;
     },
@@ -408,6 +413,7 @@ export const {
   setCNICData,
   clearCNICData,
   clearCapturedImages,
+  removeLastCapturedImage
 } = biometricSlice.actions;
 
 export default biometricSlice.reducer; 

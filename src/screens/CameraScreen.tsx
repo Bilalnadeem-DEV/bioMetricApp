@@ -11,19 +11,20 @@ import {
   Modal,
 } from 'react-native';
 import { Camera, useCameraDevices, useCameraFormat, Orientation } from 'react-native-vision-camera';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import ImageEditor from '@react-native-community/image-editor';
-import { 
-  setCameraPermission, 
-  setStoragePermission, 
-  setIsScanning, 
-  setError, 
+import {
+  setCameraPermission,
+  setStoragePermission,
+  setIsScanning,
+  setError,
   clearError,
-  addCapturedImage 
+  addCapturedImage,
 } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 
@@ -39,22 +40,19 @@ const { width, height } = Dimensions.get('window');
 
 const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
-  const { 
-    cameraPermission, 
-    storagePermission, 
-    isScanning, 
-    error,
-    currentSession 
-  } = useAppSelector((state) => state.biometric);
-  
+  const { cameraPermission, storagePermission, isScanning, error, currentSession } = useAppSelector(
+    state => state.biometric,
+  );
+
   const [hasPermission, setHasPermission] = useState(cameraPermission === 'granted');
   const [isFocusing, setIsFocusing] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const camera = useRef<Camera>(null);
   const devices = useCameraDevices();
-  
+  const [CnicCaptureStatus, setCnicCaptureStatus] = useState(true);
+
   const { imageIndex = 0, onImageCaptured } = route.params || {};
-  
+
   // Find the back camera
   const device = devices.find(d => d.position === 'back') || devices[0];
 
@@ -67,21 +65,20 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
       try {
         const permission = await Camera.requestCameraPermission();
         const hasCamera = permission === 'granted';
-        
+
         setHasPermission(hasCamera);
         dispatch(setCameraPermission(permission));
-        
+
         if (!hasCamera) {
           dispatch(setError('Camera permission is required for biometric scanning'));
           Alert.alert('Camera Permission', 'Camera permission is required for biometric scanning.');
           navigation.goBack();
           return;
         }
-        
+
         // Clear any previous errors
         dispatch(clearError());
         dispatch(setIsScanning(true));
-        
       } catch (error) {
         console.error('Error requesting camera permission:', error);
         dispatch(setError('Failed to request camera permission'));
@@ -89,7 +86,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         navigation.goBack();
       }
     };
-    
+
     if (cameraPermission === 'not_requested') {
       requestPermission();
     } else {
@@ -107,32 +104,232 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    if (imageIndex === 0 || imageIndex === 1) {
+      setTimeout(() => {
+        capturePhoto();
+      }, 5000);
+      return;
+    }
+  }, []);
+
   const cropData = {
     offset: { x: 5, y: 500.34 },
     size: { width: 800, height: 800 },
   };
-  
+
   const cropImage = async (imageUri: string, cropData: any) => {
     try {
       const croppedUri = await ImageEditor.cropImage(imageUri, cropData);
       console.log('Cropped image uri------:', croppedUri);
       return croppedUri; // ImageEditor returns the URI directly, not an object
     } catch (error) {
-      console.log("Crop error:", error);
+      console.log('Crop error:', error);
       throw error; // Re-throw to handle in calling code
+    }
+  };
+
+  const saveImageToGalleryAndGoBack = async (imageUri: string) => {
+    try {
+      await Promise.race([
+        CameraRoll.saveAsset(imageUri, {
+          type: 'photo',
+          album: 'hyperI Scans',
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Save timeout')), 8000),
+        ),
+      ]);
+      dispatch(setStoragePermission('granted'));
+    } catch (saveError) {
+      console.error('Error saving image:', saveError);
+      dispatch(setStoragePermission('denied'));
+      dispatch(setError('Failed to save image to gallery'));
+    }
+
+    // Get image dimensions for Redux store with timeout
+    const imageSize = await Promise.race([
+      new Promise<{ width: number; height: number }>(resolve => {
+        require('react-native').Image.getSize(
+          imageUri,
+          (width: number, height: number) => {
+            resolve({ width, height });
+          },
+          () => {
+            resolve({ width: 0, height: 0 });
+          },
+        );
+      }),
+      new Promise<{ width: number; height: number }>(resolve =>
+        setTimeout(() => resolve({ width: 0, height: 0 }), 3000),
+      ),
+    ]);
+
+    // Add to Redux store
+    dispatch(
+      addCapturedImage({
+        uri: imageUri,
+        index: imageIndex,
+        quality: 'high',
+        size: imageSize,
+      }),
+    );
+
+    setIsFocusing(false);
+    setIsCapturing(false);
+
+    // Call the callback if provided
+    if (onImageCaptured) {
+      onImageCaptured(imageUri, imageIndex);
+    }
+
+    navigation.goBack();
+  };
+
+  const capturingMessage = () => {
+    let message = '';
+    if (imageIndex === 0 || imageIndex === 1) {
+      if (!CnicCaptureStatus) {
+        message = 'Try adjusting the light and position of the ID card 🪪';
+      } else {
+        if (isCapturing) {
+          message = 'Scanning CNIC, keep it still';
+        } else if (isFocusing) {
+          message = 'Scanning CNIC, keep it still';
+        } else {
+          message = imageIndex === 0 ? 'Place the front of your ID card in the frame' : 'Place the back side of your CNIC in the frame';
+        }
+      }
+    } else if (imageIndex === 2) {
+      message = 'Position your face clearly in the frame for a selfie';
+    }
+
+    return message;
+  };
+
+  const performOCR = async (imageUri: string) => {
+    const idCardInfo = {
+      documentType: '',
+      name: '',
+      fatherName: '',
+      idNumber: '',
+      dateOfBirth: '',
+      dateOfIssue: '',
+      dateOfExpiry: '',
+      gender: '',
+    };
+
+    // Perform OCR on the cropped image
+    try {
+      const result = await TextRecognition.recognize(imageUri);
+
+      const detectedText = result.blocks.map(block => ({
+        text: block.text,
+        confidence: block.lines.length > 0 ? 'High' : 'Low',
+        position: {
+          top: block.frame?.top || 0,
+          left: block.frame?.left || 0,
+        },
+      }));
+
+      console.log('📝 Detected Text Blocks:');
+      detectedText.forEach((block, index) => {
+        console.log(`Block ${index + 1}:
+          Text: ${block.text}
+          Confidence: ${block.confidence}
+          Position: (${block.position.left}, ${block.position.top})
+        `);
+      });
+
+      // Helper functions
+      const cleanText = (text: string) => {
+        return text
+          .replace(/[^\w\s\-\.]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+      const extractDate = (text: string) => {
+        const dateMatch = text.match(/\d{2}[\.,]\d{2}[\.,]\d{4}/);
+        return dateMatch ? dateMatch[0].replace(',', '.') : '';
+      };
+
+      const extractCNIC = (text: string) => {
+        const cnicMatch = text.match(/\d{5}-\d{7}-\d{1}/);
+        return cnicMatch ? cnicMatch[0] : '';
+      };
+
+      // Process each text block to extract relevant information
+      result.blocks.forEach(block => {
+        const text = block.text.toLowerCase();
+        const cleanedText = cleanText(block.text);
+
+        if (text.includes('identity card') || text.includes('ldentity card')) {
+          idCardInfo.documentType = 'National Identity Card';
+        } else if (text.includes('name') && !text.includes('father')) {
+          const nameParts = cleanedText.split('Name');
+          if (nameParts.length > 1) {
+            idCardInfo.name = cleanText(nameParts[1]);
+          }
+        } else if (text.includes('father name')) {
+          const nameParts = cleanedText.split('Father Name');
+          if (nameParts.length > 1) {
+            idCardInfo.fatherName = cleanText(nameParts[1]);
+          }
+        } else if (extractCNIC(block.text)) {
+          idCardInfo.idNumber = extractCNIC(block.text);
+        } else if (text.includes('date of birth')) {
+          idCardInfo.dateOfBirth = extractDate(block.text);
+        } else if (text.includes('date of issue')) {
+          idCardInfo.dateOfIssue = extractDate(block.text);
+        } else if (text.includes('date of expiry')) {
+          idCardInfo.dateOfExpiry = extractDate(block.text);
+        } else if (text.includes('gender') || text === 'm' || text === 'mo') {
+          idCardInfo.gender = 'Male';
+        }
+      });
+
+      console.log('📝 Extracted ID Card Information:');
+      Object.entries(idCardInfo).forEach(([key, value]) => {
+        console.log(`${key}: ${value}`);
+      });
+    } catch (ocrError) {
+      console.error('OCR failed:', ocrError);
+    }
+
+    return idCardInfo;
+  };
+
+  const performCropping = async (photo: any) => {
+    const wid = photo.height - height * 0.5;
+    const hei = photo.width / 2;
+
+    let imageUri = `file://${photo.path}`;
+    console.log('Image captured:', imageUri);
+
+    try {
+      const croppedImageUri = await cropImage(imageUri, {
+        offset: { x: 250, y: height + 300 },
+        size: { width: wid, height: hei },
+      });
+
+      console.log('Cropped image uri:', croppedImageUri);
+
+      return (imageUri = `file://${croppedImageUri.path}`);
+    } catch (error) {
+      console.log('Cropping failed:', error);
     }
   };
 
   const capturePhoto = async () => {
     if (camera.current && !isFocusing && !isCapturing) {
       let captureTimeout: NodeJS.Timeout | null = null;
-      
+
       try {
-        console.log(`Capturing image ${imageIndex + 1}...`);
         setIsCapturing(true);
         setIsFocusing(true);
         dispatch(clearError());
-        
+
         // Set a timeout to prevent indefinite hanging
         captureTimeout = setTimeout(() => {
           setIsFocusing(false);
@@ -140,128 +337,101 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           console.error('Capture operation timed out');
           dispatch(setError('Capture operation timed out. Please try again.'));
         }, 15000); // 15 second timeout
-        
+
         // Focus on the fingerprint area
         const fingerprintFocusPoint = { x: 0.5, y: 0.6 };
-        
+
         try {
           await Promise.race([
             camera.current.focus(fingerprintFocusPoint),
             camera.current.focus(fingerprintFocusPoint),
             camera.current.focus(fingerprintFocusPoint),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Focus timeout')), 5000)
-            )
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Focus timeout')), 5000)),
           ]);
           console.log('Focus successful on fingerprint area');
         } catch (focusError) {
           console.log('Focus failed:', focusError);
           // Continue without focus if it fails
         }
-        
+
         // Wait for focus to stabilize
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         const photo = await Promise.race([
           camera.current.takePhoto({
             enableShutterSound: false,
           }),
-          new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Photo capture timeout')), 10000)
-          )
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Photo capture timeout')), 10000),
+          ),
         ]);
-        
+
         // Clear the timeout since capture was successful
         if (captureTimeout) {
           clearTimeout(captureTimeout);
           captureTimeout = null;
         }
 
-        console.log("Image captured:", photo)
-        const wid = photo.height - (height * 0.5)
-        const hei = photo.width / 2
+        console.log('Image captured:', photo);
 
-        let imageUri = `file://${photo.path}`;
-        console.log('Image captured:', imageUri);
-
-        try {                      
-          const croppedImageUri = await cropImage(imageUri, {
-            offset: { x: 250, y: height + 300 },
-            size: { width: wid, height: hei },
-          });
-
-          console.log('Cropped image uri:', croppedImageUri);
-        
-          imageUri = `file://${croppedImageUri.path}`;
-        } catch (error) {
-          console.log('Cropping failed:', error);
+        switch (imageIndex) {
+          case 0: {
+            // For the front of ID card
+            const imageUri = await performCropping(photo);
+            const idCardInfo = await performOCR(imageUri ?? '');
+            console.log('idCardInfo', idCardInfo);
+            if (
+              idCardInfo.name &&
+              idCardInfo.fatherName &&
+              idCardInfo.idNumber &&
+              idCardInfo.dateOfBirth
+            ) {
+              saveImageToGalleryAndGoBack(imageUri ?? '');
+            } else {
+              console.log('Some required fields are missing or empty');
+              // capture image again
+              setCnicCaptureStatus(false);
+              capturePhoto();
+            }
+            break;
+          }
+          case 1:
+            {
+              const imageUri = await performCropping(photo);
+              const idCardInfo = await performOCR(imageUri ?? '');
+              console.log('idCardInfo', idCardInfo);
+              if (
+                idCardInfo.idNumber &&
+                idCardInfo.dateOfBirth === '' &&
+                idCardInfo.dateOfExpiry === '' &&
+                idCardInfo.dateOfIssue === ''
+              ) {
+                saveImageToGalleryAndGoBack(imageUri ?? '');
+              } else {
+                console.log('Some required fields are missing or empty');
+                // capture image again
+                setCnicCaptureStatus(false);
+                capturePhoto();
+              }
+            }
+            break;
+          case 2: {
+            let imageUri = `file://${photo.path}`;
+            saveImageToGalleryAndGoBack(imageUri ?? '');
+            break;
+          }
         }
-
-        try {
-          await Promise.race([
-            CameraRoll.saveAsset(imageUri, {
-              type: 'photo',
-              album: 'hyperI Scans'
-            }),
-            new Promise<never>((_, reject) => 
-              setTimeout(() => reject(new Error('Save timeout')), 8000)
-            )
-          ]);
-          dispatch(setStoragePermission('granted'));
-        } catch (saveError) {
-          console.error('Error saving image:', saveError);
-          dispatch(setStoragePermission('denied'));
-          dispatch(setError('Failed to save image to gallery'));
-        }
-        
-        // Get image dimensions for Redux store with timeout
-        const imageSize = await Promise.race([
-          new Promise<{width: number, height: number}>((resolve) => {
-            require('react-native').Image.getSize(imageUri, (width: number, height: number) => {
-              resolve({ width, height });
-            }, () => {
-              resolve({ width: 0, height: 0 });
-            });
-          }),
-          new Promise<{width: number, height: number}>((resolve) => 
-            setTimeout(() => resolve({ width: 0, height: 0 }), 3000)
-          )
-        ]);
-        
-        // Add to Redux store
-        dispatch(addCapturedImage({
-          uri: imageUri,
-          index: imageIndex,
-          quality: 'high',
-          size: imageSize,
-        }));
-        
-        setIsFocusing(false);
-        setIsCapturing(false);
-        
-        // Call the callback if provided
-        if (onImageCaptured) {
-          onImageCaptured(imageUri, imageIndex);
-        }
-        
-        console.log('Image captured and saved successfully');
-        
-        // Navigate back to previous screen after a brief delay to show the zoom effect
-        setTimeout(() => {
-          navigation.goBack();
-        }, 600);
-        
       } catch (error) {
-        console.error('Error capturing image:', error);
-        
+        console.error('Error capturing image:');
+
         // Clear timeout if it exists
         if (captureTimeout) {
           clearTimeout(captureTimeout);
         }
-        
+
         setIsFocusing(false);
         setIsCapturing(false);
-        dispatch(setError('Failed to capture biometric scan. Please try again.'));        
+        dispatch(setError('Failed to capture biometric scan. Please try again.'));
       }
     }
   };
@@ -273,7 +443,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
 
   const format = useCameraFormat(device, [
     { photoResolution: { width: 1920, height: 1080 } },
-    { fps: 30 }
+    { fps: 30 },
   ]);
 
   if (!hasPermission || !device) {
@@ -281,7 +451,9 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
         <Text style={styles.errorText}>
-          {!hasPermission ? 'Camera permission required for biometric scanning' : 'No camera device found'}
+          {!hasPermission
+            ? 'Camera permission required for biometric scanning'
+            : 'No camera device found'}
         </Text>
         <TouchableOpacity style={styles.backButton} onPress={closeCamera}>
           <Text style={styles.backButtonText}>Go Back</Text>
@@ -299,11 +471,11 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         device={imageIndex < 2 ? deviceBack : deviceFront}
         isActive={true}
         photo={true}
-        torch='off'
+        torch="off"
         zoom={1}
         // format={imageIndex === 0 ? format : undefined}
       />
-      
+
       {/* Camera Overlay */}
       <View style={styles.cameraOverlay}>
         {/* Top Section */}
@@ -315,17 +487,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           <View style={styles.placeholder} />
         </View>
 
-        <Text style={styles.instructionText}>
-          {isCapturing
-            ? 'Capturing image...'
-            : isFocusing
-            ? 'Focusing camera...'
-            : imageIndex === 0
-            ? 'Place the front of your ID card in the frame'
-            : imageIndex === 1
-            ? 'Place the back side of your CNIC in the frame'
-            : 'Position your face clearly in the frame for a selfie'}
-        </Text>
+        <Text style={styles.instructionText}>{capturingMessage()}</Text>
 
         {/* Center Section - Multi-Finger Guide */}
         <View style={styles.centerSection}>
@@ -356,7 +518,9 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
             </View>
           ) : (
             // ID card overlay
-            <View style={styles.frameOverlay1} onLayout={(event) => console.log('event', event.nativeEvent.layout)}>
+            <View
+              style={styles.frameOverlay1}
+              onLayout={event => console.log('event', event.nativeEvent.layout)}>
               <View
                 style={[
                   {
@@ -374,21 +538,33 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         </View>
 
         {/* Bottom Section - Controls */}
-        <View style={styles.bottomSection}>
-          <View style={styles.captureArea}>
-            <TouchableOpacity
-              style={[
-                styles.captureButton,
-                (isFocusing || isCapturing) && styles.captureButtonDisabled,
-              ]}
-              onPress={capturePhoto}
-              disabled={isFocusing || isCapturing}>
-              <View style={styles.captureButtonInner}>
-                {/* Removed isCapturing indicator for cleaner design */}
+        {imageIndex === 0 || imageIndex === 1 ? (
+          <>
+            <View style={[styles.bottomSection, { opacity: 0 }]}>
+              <View style={[styles.captureArea, { opacity: 0 }]}>
+                <TouchableOpacity style={[styles.captureButton, { opacity: 0 }]} onPress={() => {}}>
+                  <View style={[styles.captureButtonInner, { opacity: 0 }]}></View>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </View>
-        </View>
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={styles.bottomSection}>
+              <View style={styles.captureArea}>
+                <TouchableOpacity
+                  style={[
+                    styles.captureButton,
+                    (isFocusing || isCapturing) && styles.captureButtonDisabled,
+                  ]}
+                  onPress={capturePhoto}
+                  disabled={isFocusing || isCapturing}>
+                  <View style={styles.captureButtonInner}></View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -462,7 +638,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 8,
     marginBottom: 20,
-    lineHeight: 30,
+    lineHeight: 30,    
   },
   centerSection: {
     flex: 1,
@@ -633,4 +809,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CameraScreen; 
+export default CameraScreen;

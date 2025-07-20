@@ -2228,6 +2228,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-ml-kit/text-recognition@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "@react-native-ml-kit/text-recognition@npm:1.5.2"
+  peerDependencies:
+    react: ">=16.8.1"
+    react-native: ">=0.60.0-rc.0 <1.0.x"
+  checksum: 3a025758dcc2344fa8c8f73fcf40c631ee8a38aec92b2a0a2b8116c3ffe4a98851ee5643d5fc0933cd35f9cde0ed7d7c9a7c9d61a7c9b2cb355a42fe6be44b7b
+  languageName: node
+  linkType: hard
+
 "@react-native/assets-registry@npm:0.80.0":
   version: 0.80.0
   resolution: "@react-native/assets-registry@npm:0.80.0"
@@ -6210,6 +6220,7 @@ __metadata:
     "@react-native-community/eslint-config": ^3.2.0
     "@react-native-community/image-editor": ^4.3.0
     "@react-native-community/slider": ^4.5.7
+    "@react-native-ml-kit/text-recognition": ^1.5.2
     "@react-native/babel-preset": 0.80.0
     "@react-native/eslint-config": 0.80.0
     "@react-native/metro-config": 0.80.0

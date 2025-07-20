@@ -27,6 +27,7 @@ import {
   clearError,
   setCNICData,
   clearCapturedImages,
+  removeLastCapturedImage,
 } from '../store/slices/biometricSlice';
 import { ColorPalettes } from '../theme/helpers/colorPalettes';
 import { cnicVerificationService } from '../services/cnicVerification.service';
@@ -52,6 +53,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
   const pulseAnim = useState(new Animated.Value(1))[0];
   const [isProcessing, setIsProcessing] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showLivenessModal, setShowLivenessModal] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
     isVerified: boolean;
     name: string;
@@ -164,6 +166,8 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
             { mode: 'contain' },
           );
 
+          setIsProcessing(true);
+
           // detectLiveness check for liveness here
           const selfieImage = capturedImages.find(img => img.index === 2);
           if (selfieImage?.uri) {
@@ -178,17 +182,14 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
               setIsProcessing(false);
 
               // Remove all captured images
-              dispatch(clearCapturedImages());
-              dispatch(setCurrentImageIndex(0));
+              dispatch(removeLastCapturedImage());
+              dispatch(setCurrentImageIndex(2));
+
+              setIsProcessing(false);
 
               // Show alert to user
-              Alert.alert(
-                'Retake Selfie Required',
-                'Please capture your selfie again to continue with verification.',
-                [{ text: 'OK' }],
-              );
-
-              // Exit early to prevent further processing
+              setShowLivenessModal(true);
+              setIsProcessing(false);
               return;
             }
           }
@@ -484,6 +485,67 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
     </Modal>
   );
 
+  const LivenessErrorModal = () => (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={showLivenessModal}
+      onRequestClose={() => setShowLivenessModal(false)}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { maxWidth: 380 }]}>
+          <View style={styles.errorIconContainer}>
+            <Text style={styles.errorIcon}>👤</Text>
+          </View>
+          <Text style={[styles.modalTitle, { color: '#F44336', marginBottom: 16 }]}>
+            Liveness Check Failed
+          </Text>
+          <View style={[styles.modalDescriptionContainer, { 
+            backgroundColor: '#FFEBEE', 
+            borderColor: '#F44336',
+            marginTop: 0,
+            padding: 16
+          }]}>
+            <Text style={[styles.modalDescription, { 
+              color: '#C62828',
+              fontSize: 15,
+              lineHeight: 22
+            }]}>
+              Please ensure the following before taking a selfie:
+            </Text>
+            <View style={styles.bulletPoints}>
+              <View style={styles.bulletPoint}>
+                <Text style={styles.bullet}>•</Text>
+                <Text style={styles.bulletText}>Use a plain, uncluttered background</Text>
+              </View>
+              <View style={styles.bulletPoint}>
+                <Text style={styles.bullet}>•</Text>
+                <Text style={styles.bulletText}>Take a clear, focused picture</Text>
+              </View>
+              <View style={styles.bulletPoint}>
+                <Text style={styles.bullet}>•</Text>
+                <Text style={styles.bulletText}>Keep your entire face within the frame</Text>
+              </View>
+              <View style={styles.bulletPoint}>
+                <Text style={styles.bullet}>•</Text>
+                <Text style={styles.bulletText}>Find good, even lighting</Text>
+              </View>
+            </View>
+          </View>
+          <TouchableOpacity 
+            style={[styles.modalButton, { 
+              marginTop: 24,
+              backgroundColor: '#F44336',
+              paddingVertical: 14,
+              minWidth: 120
+            }]} 
+            onPress={() => setShowLivenessModal(false)}>
+            <Text style={[styles.modalButtonText, { fontSize: 16 }]}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={ColorPalettes.backgrounds.primary} />
@@ -540,7 +602,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
       </ScrollView>
 
       {isProcessing && <LoadingOverlay />}
-
+      <LivenessErrorModal />
       {/* Verification Result Modal */}
       <Modal
         animationType="fade"
@@ -610,13 +672,7 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
               </View>
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Liveness Check:</Text>
-                <Text
-                  style={[
-                    styles.modalDataValue,
-                    { color: '#4CAF50'},
-                  ]}>
-                  {'PASSED ✓'}
-                </Text>
+                <Text style={[styles.modalDataValue, { color: '#4CAF50' }]}>{'PASSED ✓'}</Text>
               </View>
               <View style={styles.modalDataRow}>
                 <Text style={styles.modalDataLabel}>Face Verification:</Text>
@@ -1030,12 +1086,48 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     minWidth: 100,
+    marginTop: 24,
   },
   modalButtonText: {
     color: ColorPalettes.text.light,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  errorIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFEBEE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#F44336',
+  },
+  errorIcon: {
+    fontSize: 30,
+  },
+  bulletPoints: {
+    marginTop: 12,
+    paddingLeft: 8,
+  },
+  bulletPoint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  bullet: {
+    color: '#C62828',
+    fontSize: 16,
+    marginRight: 8,
+    lineHeight: 22,
+  },
+  bulletText: {
+    flex: 1,
+    color: '#C62828',
+    fontSize: 15,
+    lineHeight: 22,
   },
 });
 
