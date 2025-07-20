@@ -8,14 +8,16 @@ import {
   StatusBar,
   Animated,
   Dimensions,
-  Platform,
+  Modal,
 } from 'react-native';
-import { Camera, useCameraDevices, useCameraFormat } from 'react-native-vision-camera';
+import { Camera, useCameraDevices, useCameraFormat, Orientation } from 'react-native-vision-camera';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import ImageEditor from '@react-native-community/image-editor';
 import {
   setCameraPermission,
   setStoragePermission,
@@ -47,6 +49,7 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
   const [isCapturing, setIsCapturing] = useState(false);
   const camera = useRef<Camera>(null);
   const devices = useCameraDevices();
+  const [CnicCaptureStatus, setCnicCaptureStatus] = useState(true);
 
   const { imageIndex = 0, onImageCaptured } = route.params || {};
 
@@ -110,7 +113,217 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
     };
   }, [dispatch]);
 
-  // Removed animation effect
+    useEffect(() => {
+    if (imageIndex === 0 || imageIndex === 1) {
+      setTimeout(() => {
+        capturePhoto();
+      }, 5000);
+      return;
+    }
+  }, []); 
+
+    const cropImage = async (imageUri: string, cropData: any) => {
+    try {
+      const croppedUri = await ImageEditor.cropImage(imageUri, cropData);
+      console.log('Cropped image uri------:', croppedUri);
+      return croppedUri; // ImageEditor returns the URI directly, not an object
+    } catch (error) {
+      console.log('Crop error:', error);
+      throw error; // Re-throw to handle in calling code
+    }
+  };
+
+  const saveImageToGalleryAndGoBack = async (imageUri: string) => {
+    try {
+      await Promise.race([
+        CameraRoll.saveAsset(imageUri, {
+          type: 'photo',
+          album: 'hyperI Scans',
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Save timeout')), 8000),
+        ),
+      ]);
+      dispatch(setStoragePermission('granted'));
+    } catch (saveError) {
+      console.error('Error saving image:', saveError);
+      dispatch(setStoragePermission('denied'));
+      dispatch(setError('Failed to save image to gallery'));
+    }
+
+    // Get image dimensions for Redux store with timeout
+    const imageSize = await Promise.race([
+      new Promise<{ width: number; height: number }>(resolve => {
+        require('react-native').Image.getSize(
+          imageUri,
+          (width: number, height: number) => {
+            resolve({ width, height });
+          },
+          () => {
+            resolve({ width: 0, height: 0 });
+          },
+        );
+      }),
+      new Promise<{ width: number; height: number }>(resolve =>
+        setTimeout(() => resolve({ width: 0, height: 0 }), 3000),
+      ),
+    ]);
+
+    // Add to Redux store
+    dispatch(
+      addCapturedImage({
+        uri: imageUri,
+        index: imageIndex,
+        quality: 'high',
+        size: imageSize,
+      }),
+    );
+
+    setIsFocusing(false);
+    setIsCapturing(false);
+
+    // Call the callback if provided
+    if (onImageCaptured) {
+      onImageCaptured(imageUri, imageIndex);
+    }
+
+    navigation.goBack();
+  };
+
+   const capturingMessage = () => {
+    let message = '';
+    if (imageIndex === 0 || imageIndex === 1) {
+      if (!CnicCaptureStatus) {
+        message = 'Try adjusting the light and position of the ID card 🪪';
+      } else {
+        if (isCapturing) {
+          message = 'Scanning CNIC, keep it still';
+        } else if (isFocusing) {
+          message = 'Scanning CNIC, keep it still';
+        } else {
+          message = imageIndex === 0 ? 'Place the front of your ID card in the frame' : 'Place the back side of your CNIC in the frame';
+        }
+      }
+    } else if (imageIndex === 2) {
+      message = 'Position your face clearly in the frame for a selfie';
+    }
+
+    return message;
+  };
+
+  const performOCR = async (imageUri: string) => {
+    const idCardInfo = {
+      documentType: '',
+      name: '',
+      fatherName: '',
+      idNumber: '',
+      dateOfBirth: '',
+      dateOfIssue: '',
+      dateOfExpiry: '',
+      gender: '',
+    };
+
+    // Perform OCR on the cropped image
+    try {
+      const result = await TextRecognition.recognize(imageUri);
+
+      const detectedText = result.blocks.map(block => ({
+        text: block.text,
+        confidence: block.lines.length > 0 ? 'High' : 'Low',
+        position: {
+          top: block.frame?.top || 0,
+          left: block.frame?.left || 0,
+        },
+      }));
+
+      console.log('📝 Detected Text Blocks:');
+      detectedText.forEach((block, index) => {
+        console.log(`Block ${index + 1}:
+          Text: ${block.text}
+          Confidence: ${block.confidence}
+          Position: (${block.position.left}, ${block.position.top})
+        `);
+      });
+
+      // Helper functions
+      const cleanText = (text: string) => {
+        return text
+          .replace(/[^\w\s\-\.]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+      const extractDate = (text: string) => {
+        const dateMatch = text.match(/\d{2}[\.,]\d{2}[\.,]\d{4}/);
+        return dateMatch ? dateMatch[0].replace(',', '.') : '';
+      };
+
+      const extractCNIC = (text: string) => {
+        const cnicMatch = text.match(/\d{5}-\d{7}-\d{1}/);
+        return cnicMatch ? cnicMatch[0] : '';
+      };
+
+      // Process each text block to extract relevant information
+      result.blocks.forEach(block => {
+        const text = block.text.toLowerCase();
+        const cleanedText = cleanText(block.text);
+
+        if (text.includes('identity card') || text.includes('ldentity card')) {
+          idCardInfo.documentType = 'National Identity Card';
+        } else if (text.includes('name') && !text.includes('father')) {
+          const nameParts = cleanedText.split('Name');
+          if (nameParts.length > 1) {
+            idCardInfo.name = cleanText(nameParts[1]);
+          }
+        } else if (text.includes('father name')) {
+          const nameParts = cleanedText.split('Father Name');
+          if (nameParts.length > 1) {
+            idCardInfo.fatherName = cleanText(nameParts[1]);
+          }
+        } else if (extractCNIC(block.text)) {
+          idCardInfo.idNumber = extractCNIC(block.text);
+        } else if (text.includes('date of birth')) {
+          idCardInfo.dateOfBirth = extractDate(block.text);
+        } else if (text.includes('date of issue')) {
+          idCardInfo.dateOfIssue = extractDate(block.text);
+        } else if (text.includes('date of expiry')) {
+          idCardInfo.dateOfExpiry = extractDate(block.text);
+        } else if (text.includes('gender') || text === 'm' || text === 'mo') {
+          idCardInfo.gender = 'Male';
+        }
+      });
+
+      console.log('📝 Extracted ID Card Information:');
+      Object.entries(idCardInfo).forEach(([key, value]) => {
+        console.log(`${key}: ${value}`);
+      });
+    } catch (ocrError) {
+      console.error('OCR failed:', ocrError);
+    }
+
+    return idCardInfo;
+  };
+
+  const performCropping = async (photo: any) => {
+    const wid = photo.height - height * 0.5;
+    const hei = photo.width / 2;
+
+    let imageUri = `file://${photo.path}`;
+    console.log('Image captured:', imageUri);
+
+    try {
+      const croppedImageUri = await cropImage(imageUri, {
+        offset: { x: 250, y: height + 300 },
+        size: { width: wid, height: hei },
+      });
+
+      console.log('Cropped image uri:', croppedImageUri);
+
+      return (imageUri = `file://${croppedImageUri.path}`);
+    } catch (error) {
+      console.log('Cropping failed:', error);
+    }
+  };
 
   const capturePhoto = async () => {
     if (camera.current && !isFocusing && !isCapturing) {
@@ -164,70 +377,55 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
         }
 
         const imageUri = `file://${photo.path}`;
-        console.log('Image captured:', imageUri);
+        // console.log('Image captured:', imageUri);
 
-        // Removed zoom animation
-
-        // Save image to gallery with timeout protection
-        try {
-          await Promise.race([
-            CameraRoll.saveAsset(imageUri, {
-              type: 'photo',
-              album: 'hyperI Scans',
-            }),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('Save timeout')), 8000),
-            ),
-          ]);
-          dispatch(setStoragePermission('granted'));
-        } catch (saveError) {
-          console.error('Error saving image:', saveError);
-          dispatch(setStoragePermission('denied'));
-          dispatch(setError('Failed to save image to gallery'));
-        }
-
-        // Get image dimensions for Redux store with timeout
-        const imageSize = await Promise.race([
-          new Promise<{ width: number; height: number }>(resolve => {
-            require('react-native').Image.getSize(
-              imageUri,
-              (width: number, height: number) => {
-                resolve({ width, height });
-              },
-              () => {
-                resolve({ width: 0, height: 0 });
-              },
-            );
-          }),
-          new Promise<{ width: number; height: number }>(resolve =>
-            setTimeout(() => resolve({ width: 0, height: 0 }), 3000),
-          ),
-        ]);
-
-        // Add to Redux store
-        dispatch(
-          addCapturedImage({
-            uri: imageUri,
-            index: imageIndex,
-            quality: 'high',
-            size: imageSize,
-          }),
-        );
-
-        setIsFocusing(false);
-        setIsCapturing(false);
-
-        // Call the callback if provided
-        if (onImageCaptured) {
-          onImageCaptured(imageUri, imageIndex);
-        }
-
-        console.log('Image captured and saved successfully');
-
-        // Navigate back to previous screen after a brief delay to show the zoom effect
-        setTimeout(() => {
-          navigation.goBack();
-        }, 600);
+        
+          switch (imageIndex) {
+          case 0: {
+            // For the front of ID card
+            const imageUri = await performCropping(photo);
+            const idCardInfo = await performOCR(imageUri ?? '');
+            console.log('idCardInfo', idCardInfo);
+            if (
+              idCardInfo.fatherName &&
+              idCardInfo.idNumber           
+            ) {
+              saveImageToGalleryAndGoBack(imageUri ?? '');
+            } else {
+              console.log('Some required fields are missing or empty');
+              // capture image again
+              setCnicCaptureStatus(false);
+              capturePhoto();
+            }
+            break;
+          }
+          case 1:
+            {
+              const imageUri = await performCropping(photo);
+              const idCardInfo = await performOCR(imageUri ?? '');
+              console.log('idCardInfo', idCardInfo);
+              if (
+                idCardInfo.idNumber &&
+                idCardInfo.dateOfBirth === '' &&
+                idCardInfo.dateOfExpiry === '' &&
+                idCardInfo.dateOfIssue === ''
+              ) {
+                saveImageToGalleryAndGoBack(imageUri ?? '');
+              } else {
+                console.log('Some required fields are missing or empty');
+                // capture image again
+                setCnicCaptureStatus(false);
+                capturePhoto();
+              }
+            }
+            break;
+          case 2: {
+            let imageUri = `file://${photo.path}`;
+            saveImageToGalleryAndGoBack(imageUri ?? '');
+            break;
+          }
+        }       
+       
       } catch (error) {
         console.error('Error capturing image:', error);
 
@@ -239,7 +437,7 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
         setIsFocusing(false);
         setIsCapturing(false);
         dispatch(setError('Failed to capture biometric scan. Please try again.'));
-        Alert.alert('Capture Error', 'Failed to capture biometric scan. Please try again.');
+        Alert.alert('Capture Error', 'Failed to capture Please try again.');
       }
     }
   };
@@ -288,18 +486,7 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
           <Text style={styles.imageCounter}>Image {imageIndex + 1} of 3</Text>
           <View style={styles.placeholder} />
         </View>
-
-        <Text style={styles.instructionText}>
-          {isCapturing
-            ? 'Capturing image...'
-            : isFocusing
-            ? 'Focusing camera...'
-            : imageIndex === 0
-            ? 'Place the front of your ID card in the frame'
-            : imageIndex === 1
-            ? 'Place the back side of your CNIC in the frame'
-            : 'Position your face clearly in the frame for a selfie'}
-        </Text>
+        <Text style={styles.instructionText}>{capturingMessage()}</Text>
 
         {/* Center Section - Multi-Finger Guide */}
         <View style={styles.centerSection}>
@@ -330,7 +517,7 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
             </View>
           ) : (
             // ID card overlay
-            <View style={styles.frameOverlay1}>
+            <View style={styles.frameOverlay1} onLayout={event => console.log('event', event.nativeEvent.layout)}>
               <View
                 style={[
                   {
@@ -348,21 +535,33 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
         </View>
 
         {/* Bottom Section - Controls */}
-        <View style={styles.bottomSection}>
-          <View style={styles.captureArea}>
-            <TouchableOpacity
-              style={[
-                styles.captureButton,
-                (isFocusing || isCapturing) && styles.captureButtonDisabled,
-              ]}
-              onPress={capturePhoto}
-              disabled={isFocusing || isCapturing}>
-              <View style={styles.captureButtonInner}>
-                {/* Removed isCapturing indicator for cleaner design */}
+        {imageIndex === 0 || imageIndex === 1 ? (
+          <>
+            <View style={[styles.bottomSection, { opacity: 0 }]}>
+              <View style={[styles.captureArea, { opacity: 0 }]}>
+                <TouchableOpacity style={[styles.captureButton, { opacity: 0 }]} onPress={() => {}}>
+                  <View style={[styles.captureButtonInner, { opacity: 0 }]}></View>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </View>
-        </View>
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={styles.bottomSection}>
+              <View style={styles.captureArea}>
+                <TouchableOpacity
+                  style={[
+                    styles.captureButton,
+                    (isFocusing || isCapturing) && styles.captureButtonDisabled,
+                  ]}
+                  onPress={capturePhoto}
+                  disabled={isFocusing || isCapturing}>
+                  <View style={styles.captureButtonInner}></View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );

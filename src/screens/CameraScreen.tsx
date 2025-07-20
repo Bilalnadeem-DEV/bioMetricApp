@@ -111,12 +111,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
       }, 5000);
       return;
     }
-  }, []);
-
-  const cropData = {
-    offset: { x: 5, y: 500.34 },
-    size: { width: 800, height: 800 },
-  };
+  }, []); 
 
   const cropImage = async (imageUri: string, cropData: any) => {
     try {
@@ -441,11 +436,6 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     navigation.goBack();
   };
 
-  const format = useCameraFormat(device, [
-    { photoResolution: { width: 1920, height: 1080 } },
-    { fps: 30 },
-  ]);
-
   if (!hasPermission || !device) {
     return (
       <View style={styles.container}>
@@ -473,7 +463,6 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         photo={true}
         torch="off"
         zoom={1}
-        // format={imageIndex === 0 ? format : undefined}
       />
 
       {/* Camera Overlay */}
@@ -519,8 +508,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           ) : (
             // ID card overlay
             <View
-              style={styles.frameOverlay1}
-              onLayout={event => console.log('event', event.nativeEvent.layout)}>
+              style={styles.frameOverlay1}>
               <View
                 style={[
                   {

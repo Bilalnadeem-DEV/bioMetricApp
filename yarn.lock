@@ -6246,7 +6246,6 @@ __metadata:
     react-native-gesture-handler: ^2.26.0
     react-native-image-crop-picker: ^0.50.1
     react-native-image-picker: ^8.2.1
-    react-native-image-resizer: ^1.4.5
     react-native-safe-area-context: ^5.5.1
     react-native-screens: ^4.11.1
     react-native-toast-message: ^2.3.2
@@ -8290,15 +8289,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: fc85bc278c0ba5ccef8cbacfce3001e994b34b0895be34e0c884021d2215802c2e553c5e97ff7f21a30e502be60000f90cf9555e9c2a19c71fdc76120d30e158
-  languageName: node
-  linkType: hard
-
-"react-native-image-resizer@npm:^1.4.5":
-  version: 1.4.5
-  resolution: "react-native-image-resizer@npm:1.4.5"
-  peerDependencies:
-    react-native: ">=v0.40.0"
-  checksum: c530b119f25c27b669148461554440acd05fb37f0a24a1afc3d58c861e426551c70c679983c0399034fd54ca3575c89d0863778c49295721cb33b65bbf3f0f37
   languageName: node
   linkType: hard
 
