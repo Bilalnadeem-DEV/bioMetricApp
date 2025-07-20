@@ -10,12 +10,13 @@ import {
   Dimensions,
   Modal,
 } from 'react-native';
-import { Camera, useCameraDevices } from 'react-native-vision-camera';
+import { Camera, useCameraDevices, useCameraFormat, Orientation } from 'react-native-vision-camera';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import ImageEditor from '@react-native-community/image-editor';
 import { 
   setCameraPermission, 
   setStoragePermission, 
@@ -49,11 +50,8 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   const [hasPermission, setHasPermission] = useState(cameraPermission === 'granted');
   const [isFocusing, setIsFocusing] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const camera = useRef<Camera>(null);
   const devices = useCameraDevices();
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   
   const { imageIndex = 0, onImageCaptured } = route.params || {};
   
@@ -109,29 +107,21 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     };
   }, [dispatch]);
 
-  useEffect(() => {
-    // Start pulsing animation for the capture area
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.02,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulseAnimation.start();
-    
-    return () => {
-      pulseAnimation.stop();
-      pulseAnimation.reset();
-    };
-  }, [pulseAnim]);
+  const cropData = {
+    offset: { x: 5, y: 500.34 },
+    size: { width: 800, height: 800 },
+  };
+  
+  const cropImage = async (imageUri: string, cropData: any) => {
+    try {
+      const croppedUri = await ImageEditor.cropImage(imageUri, cropData);
+      console.log('Cropped image uri------:', croppedUri);
+      return croppedUri; // ImageEditor returns the URI directly, not an object
+    } catch (error) {
+      console.log("Crop error:", error);
+      throw error; // Re-throw to handle in calling code
+    }
+  };
 
   const capturePhoto = async () => {
     if (camera.current && !isFocusing && !isCapturing) {
@@ -156,6 +146,8 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         
         try {
           await Promise.race([
+            camera.current.focus(fingerprintFocusPoint),
+            camera.current.focus(fingerprintFocusPoint),
             camera.current.focus(fingerprintFocusPoint),
             new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Focus timeout')), 5000)
@@ -184,26 +176,27 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
           clearTimeout(captureTimeout);
           captureTimeout = null;
         }
-        
-        const imageUri = `file://${photo.path}`;
+
+        console.log("Image captured:", photo)
+        const wid = photo.height
+        const hei = photo.width / 2
+
+        let imageUri = `file://${photo.path}`;
         console.log('Image captured:', imageUri);
+
+        try {                      
+          const croppedImageUri = await cropImage(imageUri, {
+            offset: { x: 5, y: height + 200 },
+            size: { width: wid, height: hei },
+          });
+
+          console.log('Cropped image uri:', croppedImageUri);
         
-        // Zoom animation after capture
-        const zoomAnimation = Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.3,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-        ]);
-        zoomAnimation.start();
-        
-        // Save image to gallery with timeout protection
+          imageUri = `file://${croppedImageUri.path}`;
+        } catch (error) {
+          console.log('Cropping failed:', error);
+        }
+
         try {
           await Promise.race([
             CameraRoll.saveAsset(imageUri, {
@@ -268,9 +261,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         
         setIsFocusing(false);
         setIsCapturing(false);
-        dispatch(setError('Failed to capture biometric scan. Please try again.'));
-        setErrorMessage('Failed to capture biometric scan. Please try again.');
-        setShowErrorModal(true);
+        dispatch(setError('Failed to capture biometric scan. Please try again.'));        
       }
     }
   };
@@ -279,6 +270,11 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     dispatch(setIsScanning(false));
     navigation.goBack();
   };
+
+  const format = useCameraFormat(device, [
+    { photoResolution: { width: 1920, height: 1080 } },
+    { fps: 30 }
+  ]);
 
   if (!hasPermission || !device) {
     return (
@@ -304,6 +300,8 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         isActive={true}
         photo={true}
         torch='off'
+        zoom={1}
+        // format={imageIndex === 0 ? format : undefined}
       />
       
       {/* Camera Overlay */}
@@ -358,7 +356,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
             </View>
           ) : (
             // ID card overlay
-            <View style={styles.frameOverlay1}>
+            <View style={styles.frameOverlay1} onLayout={(event) => console.log('event', event.nativeEvent.layout)}>
               <View
                 style={[
                   {

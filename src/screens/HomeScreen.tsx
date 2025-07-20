@@ -142,13 +142,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 
               </View>
             )}
-          </View>
-
-          <TouchableOpacity
-                style={[styles.button, styles.newScreenButton]}
-                onPress={() => navigation.navigate('LocalModelPOC')}>
-                <Text style={styles.buttonText}>Local model POC</Text>
-              </TouchableOpacity>
+          </View> 
           {!isRegistered ? (
           // {false ? (
             <View style={styles.buttonContainer}>

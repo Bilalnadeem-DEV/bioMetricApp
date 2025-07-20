@@ -672,12 +672,12 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
                 // setShowVerificationModal(false),
                 // navigation.navigate('NewScreen')
                 setShowVerificationModal(false);
-                verificationResult?.isVerified
-                  ? (navigation.replace('NewScreen'),
-                    dispatch(clearCapturedImages()),
-                    dispatch(setCurrentImageIndex(0)))
-                  : dispatch(clearCapturedImages());
-                dispatch(setCurrentImageIndex(0));
+                // verificationResult?.isVerified
+                //   ? (navigation.replace('NewScreen'),
+                //     dispatch(clearCapturedImages()),
+                //     dispatch(setCurrentImageIndex(0)))
+                //   : dispatch(clearCapturedImages());
+                // dispatch(setCurrentImageIndex(0));
               }}>
               <Text style={styles.modalButtonText}>Move to next step of verification</Text>
             </TouchableOpacity>
