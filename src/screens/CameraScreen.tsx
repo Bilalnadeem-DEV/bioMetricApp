@@ -178,7 +178,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         }
 
         console.log("Image captured:", photo)
-        const wid = photo.height
+        const wid = photo.height - (height * 0.5)
         const hei = photo.width / 2
 
         let imageUri = `file://${photo.path}`;
@@ -186,7 +186,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
 
         try {                      
           const croppedImageUri = await cropImage(imageUri, {
-            offset: { x: 5, y: height + 200 },
+            offset: { x: 250, y: height + 300 },
             size: { width: wid, height: hei },
           });
 
