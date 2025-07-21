@@ -194,7 +194,7 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
     let message = '';
     if (imageIndex === 0 || imageIndex === 1) {
       if (!CnicCaptureStatus) {
-        message = 'Try adjusting the light and position of the ID card 🪪';
+        message = 'Try adjusting the light and position of the ID card 🪪, bring it more closer';
       } else {
         if (isCapturing) {
           message = 'Scanning CNIC, keep it still';
@@ -305,16 +305,16 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
   };
 
   const performCropping = async (photo: any) => {
-    const wid = photo.height - height * 0.5;
-    const hei = photo.width / 2;
+    const wid = photo.width - (photo.width * 0.1) ;
+    const hei = photo.height / 2;
 
     let imageUri = `file://${photo.path}`;
-    console.log('Image captured:', imageUri);
+    console.log('Image captured:', photo);
 
     try {
       const croppedImageUri = await cropImage(imageUri, {
-        offset: { x: 250, y: height + 300 },
-        size: { width: wid, height: hei },
+        offset: { x: 200, y: height + 300},
+        size: { width: CnicCaptureStatus ? wid : wid + 500 , height: CnicCaptureStatus ? hei : hei  + 500 },
       });
 
       console.log('Cropped image uri:', croppedImageUri);
@@ -377,7 +377,7 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
         }
 
         const imageUri = `file://${photo.path}`;
-        // console.log('Image captured:', imageUri);
+        // console.log('Image captured:', photo);
 
         
           switch (imageIndex) {
@@ -388,7 +388,9 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
             console.log('idCardInfo', idCardInfo);
             if (
               idCardInfo.fatherName &&
-              idCardInfo.idNumber           
+              idCardInfo.idNumber && 
+              (idCardInfo.dateOfBirth || 
+              idCardInfo.dateOfExpiry)
             ) {
               saveImageToGalleryAndGoBack(imageUri ?? '');
             } else {
@@ -474,6 +476,7 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
         isActive={true}
         photo={true}
         // torch='on'
+        zoom={1}
       />
 
       {/* Camera Overlay */}

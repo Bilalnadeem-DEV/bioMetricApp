@@ -850,15 +850,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
     borderWidth: 2,
-    borderColor: ColorPalettes.borders.light,
-    shadowColor: ColorPalettes.shadows.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
     overflow: 'hidden',
   },
   thumbnailImage: {
