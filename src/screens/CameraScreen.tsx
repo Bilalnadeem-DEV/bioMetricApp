@@ -111,7 +111,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
       }, 5000);
       return;
     }
-  }, []); 
+  }, []);
 
   const cropImage = async (imageUri: string, cropData: any) => {
     try {
@@ -192,7 +192,10 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         } else if (isFocusing) {
           message = 'Scanning CNIC, keep it still';
         } else {
-          message = imageIndex === 0 ? 'Place the front of your ID card in the frame' : 'Place the back side of your CNIC in the frame';
+          message =
+            imageIndex === 0
+              ? 'Place the front of your ID card in the frame'
+              : 'Place the back side of your CNIC in the frame';
         }
       }
     } else if (imageIndex === 2) {
@@ -257,30 +260,21 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
       // Process each text block to extract relevant information
       result.blocks.forEach(block => {
         const text = block.text.toLowerCase();
-        const cleanedText = cleanText(block.text);
+        const cleanedText = cleanText(text);
 
-        if (text.includes('identity card') || text.includes('ldentity card')) {
-          idCardInfo.documentType = 'National Identity Card';
-        } else if (text.includes('name') && !text.includes('father')) {
-          const nameParts = cleanedText.split('Name');
-          if (nameParts.length > 1) {
-            idCardInfo.name = cleanText(nameParts[1]);
-          }
-        } else if (text.includes('father name')) {
-          const nameParts = cleanedText.split('Father Name');
-          if (nameParts.length > 1) {
-            idCardInfo.fatherName = cleanText(nameParts[1]);
-          }
+        if (cleanedText.includes('name') || cleanedText.includes('father')) {
+          idCardInfo.fatherName = 'valid';
+          idCardInfo.name = 'valid';
         } else if (extractCNIC(block.text)) {
-          idCardInfo.idNumber = extractCNIC(block.text);
-        } else if (text.includes('date of birth')) {
-          idCardInfo.dateOfBirth = extractDate(block.text);
-        } else if (text.includes('date of issue')) {
-          idCardInfo.dateOfIssue = extractDate(block.text);
-        } else if (text.includes('date of expiry')) {
-          idCardInfo.dateOfExpiry = extractDate(block.text);
-        } else if (text.includes('gender') || text === 'm' || text === 'mo') {
-          idCardInfo.gender = 'Male';
+          idCardInfo.idNumber = 'valid';
+        } else if (cleanedText.includes('date of birth') || cleanedText.includes('birth')) {
+          idCardInfo.dateOfBirth = 'valid';
+        } else if (cleanedText.includes('date of issue') || cleanedText.includes('issue')) {
+          idCardInfo.dateOfIssue = 'valid';
+        } else if (cleanedText.includes('date of expiry') || cleanedText.includes('expiry')) {
+          idCardInfo.dateOfExpiry = 'valid';
+        } else if (cleanedText.includes('gender')) {
+          idCardInfo.gender = 'valid';
         }
       });
 
@@ -317,27 +311,26 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
   // };
 
   const performCropping = async (photo: any) => {
-
     console.log('photophotophotophotophoto', photo);
 
-    let wid = 0 
-    let hei = 0
+    let wid = 0;
+    let hei = 0;
 
-    if(photo.width < photo.height){
-      wid = photo.width
-      hei = photo.height
-    }else{
-      wid = photo.height 
-      hei = photo.width
-    }    
+    if (photo.width < photo.height) {
+      wid = photo.width;
+      hei = photo.height;
+    } else {
+      wid = photo.height;
+      hei = photo.width;
+    }
 
     let imageUri = `file://${photo.path}`;
-    console.log('Image captured:', imageUri);    
+    console.log('Image captured:', imageUri);
 
     try {
       const croppedImageUri = await cropImage(imageUri, {
-        offset: { x: 0, y: (hei - (hei * 0.8)) },
-        size: { width: wid, height: hei * 0.60 },
+        offset: { x: 0, y: hei - hei * 0.8 },
+        size: { width: wid, height: hei * 0.6 },
       });
 
       console.log('Cropped image uri:', croppedImageUri);
@@ -370,9 +363,9 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
 
         try {
           await Promise.race([
-            camera.current.focus(fingerprintFocusPoint),
-            camera.current.focus(fingerprintFocusPoint),
-            camera.current.focus(fingerprintFocusPoint),
+            // camera.current.focus(fingerprintFocusPoint),
+            // camera.current.focus(fingerprintFocusPoint),
+            // camera.current.focus(fingerprintFocusPoint),
             new Promise((_, reject) => setTimeout(() => reject(new Error('Focus timeout')), 5000)),
           ]);
           console.log('Focus successful on fingerprint area');
@@ -427,7 +420,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
               const imageUri = await performCropping(photo);
               const idCardInfo = await performOCR(imageUri ?? '');
               console.log('idCardInfo', idCardInfo);
-              if ( 
+              if (
                 idCardInfo.idNumber &&
                 idCardInfo.dateOfBirth === '' &&
                 idCardInfo.dateOfExpiry === '' &&
@@ -484,6 +477,23 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     );
   }
 
+  const handleTapToFocus = async (event: any) => {
+    const { locationX, locationY } = event.nativeEvent;
+    
+    // Normalize coordinates to 0-1 range for camera focus
+    const normalizedX = locationX / width;
+    const normalizedY = locationY / height;
+    
+    console.log(`Tap to focus at: (${normalizedX.toFixed(2)}, ${normalizedY.toFixed(2)})`);
+    
+    try {
+      await camera.current?.focus({ x: normalizedX, y: normalizedY });
+      console.log('Focus successful');
+    } catch (error) {
+      console.log('Focus failed:', error);
+    }
+  };
+
   return (
     <View style={styles.cameraContainer}>
       <StatusBar barStyle="light-content" backgroundColor={ColorPalettes.backgrounds.overlayDark} />
@@ -496,6 +506,11 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
         torch="off"
         zoom={1}
       />
+
+{/* <TouchableOpacity style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'red', opacity: 0.0}}
+        onPress={handleTapToFocus}>
+        <Text>Camera</Text>
+      </TouchableOpacity> */}
 
       {/* Camera Overlay */}
       <View style={styles.cameraOverlay}>
@@ -539,8 +554,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
             </View>
           ) : (
             // ID card overlay
-            <View
-              style={styles.frameOverlay1}>
+            <View style={styles.frameOverlay1}>
               <View
                 style={[
                   {
@@ -658,7 +672,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 8,
     marginBottom: 20,
-    lineHeight: 30,    
+    lineHeight: 30,
   },
   centerSection: {
     flex: 1,

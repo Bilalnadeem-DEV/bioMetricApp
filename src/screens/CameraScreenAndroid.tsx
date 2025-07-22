@@ -264,32 +264,24 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
       };
 
       // Process each text block to extract relevant information
+
       result.blocks.forEach(block => {
         const text = block.text.toLowerCase();
-        const cleanedText = cleanText(block.text);
+        const cleanedText = cleanText(text);
 
-        if (text.includes('identity card') || text.includes('ldentity card')) {
-          idCardInfo.documentType = 'National Identity Card';
-        } else if (text.includes('name') && !text.includes('father')) {
-          const nameParts = cleanedText.split('Name');
-          if (nameParts.length > 1) {
-            idCardInfo.name = cleanText(nameParts[1]);
-          }
-        } else if (text.includes('father name')) {
-          const nameParts = cleanedText.split('Father Name');
-          if (nameParts.length > 1) {
-            idCardInfo.fatherName = cleanText(nameParts[1]);
-          }
+        if (cleanedText.includes('name') || cleanedText.includes('father')) {
+          idCardInfo.fatherName = 'valid';
+          idCardInfo.name = 'valid';        
         } else if (extractCNIC(block.text)) {
-          idCardInfo.idNumber = extractCNIC(block.text);
-        } else if (text.includes('date of birth')) {
-          idCardInfo.dateOfBirth = extractDate(block.text);
-        } else if (text.includes('date of issue')) {
-          idCardInfo.dateOfIssue = extractDate(block.text);
-        } else if (text.includes('date of expiry')) {
-          idCardInfo.dateOfExpiry = extractDate(block.text);
-        } else if (text.includes('gender') || text === 'm' || text === 'mo') {
-          idCardInfo.gender = 'Male';
+          idCardInfo.idNumber = 'valid';
+        } else if (cleanedText.includes('date of birth') || cleanedText.includes('birth')) {
+          idCardInfo.dateOfBirth = 'valid' ;
+        } else if (cleanedText.includes('date of issue') || cleanedText.includes('issue')) {
+          idCardInfo.dateOfIssue = 'valid';
+        } else if (cleanedText.includes('date of expiry') || cleanedText.includes('expiry')) {
+          idCardInfo.dateOfExpiry =  'valid' ;
+        } else if (cleanedText.includes('gender')){
+          idCardInfo.gender = 'valid';
         }
       });
 
