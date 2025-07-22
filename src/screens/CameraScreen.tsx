@@ -295,17 +295,49 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
     return idCardInfo;
   };
 
+  // const performCropping = async (photo: any) => {
+  //   const wid = photo.height - height * 0.5;
+  //   const hei = photo.width / 2;
+
+  //   let imageUri = `file://${photo.path}`;
+  //   console.log('Image captured:', imageUri);
+
+  //   try {
+  //     const croppedImageUri = await cropImage(imageUri, {
+  //       offset: { x: 250, y: height + 300 },
+  //       size: { width: wid, height: hei },
+  //     });
+
+  //     console.log('Cropped image uri:', croppedImageUri);
+
+  //     return (imageUri = `file://${croppedImageUri.path}`);
+  //   } catch (error) {
+  //     console.log('Cropping failed:', error);
+  //   }
+  // };
+
   const performCropping = async (photo: any) => {
-    const wid = photo.height - height * 0.5;
-    const hei = photo.width / 2;
+
+    console.log('photophotophotophotophoto', photo);
+
+    let wid = 0 
+    let hei = 0
+
+    if(photo.width < photo.height){
+      wid = photo.width
+      hei = photo.height
+    }else{
+      wid = photo.height 
+      hei = photo.width
+    }    
 
     let imageUri = `file://${photo.path}`;
-    console.log('Image captured:', imageUri);
+    console.log('Image captured:', imageUri);    
 
     try {
       const croppedImageUri = await cropImage(imageUri, {
-        offset: { x: 250, y: height + 300 },
-        size: { width: wid, height: hei },
+        offset: { x: 0, y: (hei - (hei * 0.8)) },
+        size: { width: wid, height: hei * 0.60 },
       });
 
       console.log('Cropped image uri:', croppedImageUri);
@@ -395,7 +427,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ navigation, route }) => {
               const imageUri = await performCropping(photo);
               const idCardInfo = await performOCR(imageUri ?? '');
               console.log('idCardInfo', idCardInfo);
-              if (
+              if ( 
                 idCardInfo.idNumber &&
                 idCardInfo.dateOfBirth === '' &&
                 idCardInfo.dateOfExpiry === '' &&

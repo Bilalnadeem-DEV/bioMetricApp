@@ -304,17 +304,49 @@ const CameraScreenAndroid: React.FC<CameraScreenProps> = ({ navigation, route })
     return idCardInfo;
   };
 
+  // const performCropping = async (photo: any) => {
+  //   const wid = photo.width - (photo.width * 0.1) ;
+  //   const hei = photo.height / 2;
+
+  //   let imageUri = `file://${photo.path}`;
+  //   console.log('Image captured:', photo);
+
+  //   try {
+  //     const croppedImageUri = await cropImage(imageUri, {
+  //       offset: { x: 200, y: height + 300},
+  //       size: { width: CnicCaptureStatus ? wid : wid + 500 , height: CnicCaptureStatus ? hei : hei  + 500 },
+  //     });
+
+  //     console.log('Cropped image uri:', croppedImageUri);
+
+  //     return (imageUri = `file://${croppedImageUri.path}`);
+  //   } catch (error) {
+  //     console.log('Cropping failed:', error);
+  //   }
+  // };
+
   const performCropping = async (photo: any) => {
-    const wid = photo.width - (photo.width * 0.1) ;
-    const hei = photo.height / 2;
+
+    console.log('photophotophotophotophoto', photo);
+
+    let wid = 0 
+    let hei = 0
+
+    if(photo.width < photo.height){
+      wid = photo.width
+      hei = photo.height
+    }else{
+      wid = photo.height 
+      hei = photo.width
+    }    
 
     let imageUri = `file://${photo.path}`;
-    console.log('Image captured:', photo);
+    console.log('Image captured:', imageUri);    
 
     try {
       const croppedImageUri = await cropImage(imageUri, {
-        offset: { x: 200, y: height + 300},
-        size: { width: CnicCaptureStatus ? wid : wid + 500 , height: CnicCaptureStatus ? hei : hei  + 500 },
+        offset: { x: 0, y: (hei - (hei * 0.8)) },
+        size: { width: wid, height: hei * 0.60 },
       });
 
       console.log('Cropped image uri:', croppedImageUri);
