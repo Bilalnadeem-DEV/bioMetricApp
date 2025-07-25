@@ -24,6 +24,8 @@ import {
   clearBiometricData,
   setError,
   clearError,
+  setCapturedImages,
+  clearCapturedImages,
 } from '../store/slices/biometricSlice';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import RNFS from 'react-native-fs';
@@ -31,6 +33,7 @@ import { ColorPalettes } from '../theme/helpers/colorPalettes';
 import { biometricService } from '../services/biometric.service';
 import { setLoggedInUserDetail, setUserRegistered } from '../store/slices/userSlice';
 import Toast from 'react-native-toast-message';
+import { temporaryBackendService } from '../services/temporaryBackendServices';
 
 type NewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'NewScreen'>;
 
@@ -42,7 +45,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
 
   // Get data from Redux store
-  const userName = useAppSelector(state => state.user.name);
+  
   const {
     capturedImages,
     isScanning,
@@ -62,6 +65,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const { cnicData } = useAppSelector(state => state.biometric);
   const [showInstructions, setShowInstructions] = useState(true);
   const scanConfig = useAppSelector(state => state.scan);
+  const userName = useAppSelector(state => state.user.name);
 
   useEffect(() => {     
     // setShowInstructions(true)
@@ -83,155 +87,49 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     loadSDK();
   }, [dispatch]);
 
-  // const config = {
-  //   licenseKey: '9KM2-DLW6-E8VY-ADFI',
-  //   numberFingersToCapture: 4,
-  //   captureType: 'LEFT_HAND_FINGERS',
-  //   outputType: 'CAPTURE_AND_SEGMENTATION',
-  //   timeToCapture: 1,
-  //   overlayColor: ColorPalettes.transparent.black30,
-  //   imageQuality: {
-  //     compressionQuality: 100,
-  //     imageFormat: 'PNG',
-  //     enableHighResolution: true,
-  //     antiAliasing: true,
-  //   },
-  //   cameraSettings: {
-  //     focusMode: 'auto',
-  //     exposureMode: 'auto',
-  //     whiteBalanceMode: 'auto',
-  //     stabilization: true,
-  //     highQualityMode: true,
-  //   },
-  //   processingSettings: {
-  //     enableNoiseReduction: true,
-  //     enableSharpening: true,
-  //     contrastEnhancement: true,
-  //     brightnessAdjustment: 'auto',
-  //     qualityThreshold: 80,
-  //   },
-
-  //   captureCountdown: {
-  //     enabled: true,
-  //     backgroundColor: ColorPalettes.transparent.black20,
-  //     progressColor: ColorPalettes.semantic.fingerprint,
-  //     textColor: ColorPalettes.text.light,
-  //     countdownDuration: 2,
-  //   },
-  //   backButton: {
-  //     enabled: true,
-  //     backgroundColor: ColorPalettes.transparent.clear,
-  //     buttonPadding: 20,
-  //     buttonSize: { width: 56, height: 56 },
-  //     iconOptions: {
-  //       enabled: true,
-  //       iconFile: 'fingerprintsdk_ic_close',
-  //       iconColor: ColorPalettes.text.light,
-  //       iconSize: { width: 32, height: 32 },
-  //     },
-  //     labelOptions: {
-  //       enabled: false,
-  //       content: 'Back',
-  //       textColor: ColorPalettes.text.light,
-  //       textSize: 14,
-  //     },
-  //   },
-  //   helpText: {
-  //     enabled: true,
-  //     messages: {
-  //       leftHandMessage: 
-  //         'Place your left hand (without thumb)\nUse the optimal lighting conditions.',
-  //       rightHandMessage:
-  //         'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
-  //       thumbsMessage:
-  //         'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
-  //     },
-  //     textColor: ColorPalettes.text.light,
-  //     textSize: 20,      
-  //   },
-  //   fingerEllipse: {
-  //     enabled: true,
-  //     // ellipseColor: ColorPalettes.semantic.fingerprint + '80',
-  //     thickness: 3,
-  //   },
-  //   distanceIndicator: {
-  //     enabled: true,
-  //     selectedBarColor: ColorPalettes.semantic.fingerprint,
-  //     unselectedBarColor: ColorPalettes.text.light,
-  //     arrowColor: ColorPalettes.semantic.fingerprint,
-  //     sensitivity: 'medium',
-  //     tooCloseText: {
-  //       enabled: true,
-  //       content: 'Too close',
-  //       textColor: ColorPalettes.interactive.error,
-  //       textSize: 16,
-  //     },
-  //     tooFarText: {
-  //       enabled: true,
-  //       content: 'Too far',
-  //       textColor: ColorPalettes.interactive.error,
-  //       textSize: 16,
-  //     },
-  //     perfectDistanceText: {
-  //       enabled: true,
-  //       content: 'Perfect distance - hold steady!',
-  //       textColor: ColorPalettes.interactive.success,
-  //       textSize: 16,
-  //     },
-  //   },
-  //   motionDetection: {
-  //     enabled: true,
-  //     sensitivity: 'low',
-  //     stabilizationTime: 1,
-  //     motionThreshold: 1.0,
-  //   },
-  //   qualityValidation: {
-  //     enabled: true,
-  //     minimumQualityScore: 75,
-  //     rejectBlurryImages: true,
-  //     rejectLowContrastImages: true,
-  //     enableQualityFeedback: true,
-  //   },
-  // };
+  useEffect(() => {   
+    dispatch(clearCapturedImages());  
+  }, []);
 
   const config = {
     licenseKey: '9KM2-DLW6-E8VY-ADFI',
     numberFingersToCapture: 4,
-    captureType: scanConfig.captureType,
-    outputType: scanConfig.outputType,
-    timeToCapture: scanConfig.timeToCapture,
-    overlayColor: scanConfig.overlayColor,
+    captureType: 'LEFT_HAND_FINGERS',
+    outputType: 'CAPTURE_AND_SEGMENTATION',
+    timeToCapture: 1,
+    overlayColor: ColorPalettes.transparent.black30,
     imageQuality: {
-      compressionQuality: scanConfig.imageQuality.compressionQuality,
-      imageFormat: scanConfig.imageQuality.imageFormat,
-      enableHighResolution: scanConfig.imageQuality.enableHighResolution,
-      antiAliasing: scanConfig.imageQuality.antiAliasing,
+      compressionQuality: 100,
+      imageFormat: 'PNG',
+      enableHighResolution: true,
+      antiAliasing: true,
     },
     cameraSettings: {
-      focusMode: scanConfig.cameraSettings.focusMode,
-      exposureMode: scanConfig.cameraSettings.exposureMode,
-      whiteBalanceMode: scanConfig.cameraSettings.whiteBalanceMode,
-      stabilization: scanConfig.cameraSettings.stabilization,
-      highQualityMode: scanConfig.cameraSettings.highQualityMode,
+      focusMode: 'continuous',
+      exposureMode: 'auto',
+      whiteBalanceMode: 'auto',
+      stabilization: true,
+      highQualityMode: true,
     },
     processingSettings: {
-      enableNoiseReduction: scanConfig.processingSettings.enableNoiseReduction,
-      enableSharpening: scanConfig.processingSettings.enableSharpening,
-      contrastEnhancement: scanConfig.processingSettings.contrastEnhancement,
-      brightnessAdjustment: scanConfig.processingSettings.brightnessAdjustment,
-      qualityThreshold: scanConfig.processingSettings.qualityThreshold,
+      enableNoiseReduction: true,
+      enableSharpening: true,
+      contrastEnhancement: true,
+      brightnessAdjustment: 'auto',
+      qualityThreshold: 80,
     },
+
     captureCountdown: {
-      enabled: scanConfig.captureCountdown.enabled,
-      backgroundColor: scanConfig.captureCountdown.backgroundColor,
-      progressColor: scanConfig.captureCountdown.progressColor,
-      textColor: scanConfig.captureCountdown.textColor,
-      countdownDuration: scanConfig.captureCountdown.countdownDuration,
+      enabled: true,
+      backgroundColor: ColorPalettes.transparent.black20,
+      progressColor: ColorPalettes.semantic.fingerprint,
+      textColor: ColorPalettes.text.light,
+      countdownDuration: 2,
     },
     backButton: {
-      enabled: scanConfig.backButton.enabled,
-      backgroundColor: scanConfig.backButton.backgroundColor,
-      buttonPadding: scanConfig.backButton.buttonPadding,
+      enabled: true,
+      backgroundColor: ColorPalettes.transparent.clear,
+      buttonPadding: 20,
       buttonSize: { width: 56, height: 56 },
       iconOptions: {
         enabled: true,
@@ -247,28 +145,29 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       },
     },
     helpText: {
-      enabled: scanConfig.helpText.enabled,
+      enabled: true,
       messages: {
         leftHandMessage: 
-          'Place your left hand (without thumb)\nuntil the marker is centered.',
+          'Place your left hand (without thumb)\nUse the optimal lighting conditions.',
         rightHandMessage:
           'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
         thumbsMessage:
           'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
       },
-      textColor: scanConfig.helpText.textColor,
-      textSize: scanConfig.helpText.textSize,      
+      textColor: ColorPalettes.text.light,
+      textSize: 20,      
     },
     fingerEllipse: {
-      enabled: scanConfig.fingerEllipse.enabled,
-      thickness: scanConfig.fingerEllipse.thickness,
+      enabled: true,
+      // ellipseColor: ColorPalettes.semantic.fingerprint + '80',
+      thickness: 3,
     },
     distanceIndicator: {
-      enabled: scanConfig.distanceIndicator.enabled,
-      selectedBarColor: scanConfig.distanceIndicator.selectedBarColor,
-      unselectedBarColor: scanConfig.distanceIndicator.unselectedBarColor,
-      arrowColor: scanConfig.distanceIndicator.arrowColor,
-      sensitivity: scanConfig.distanceIndicator.sensitivity,
+      enabled: true,
+      selectedBarColor: ColorPalettes.semantic.fingerprint,
+      unselectedBarColor: ColorPalettes.text.light,
+      arrowColor: ColorPalettes.semantic.fingerprint,
+      sensitivity: 'medium',
       tooCloseText: {
         enabled: true,
         content: 'Too close',
@@ -289,17 +188,17 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       },
     },
     motionDetection: {
-      enabled: scanConfig.motionDetection.enabled,
-      sensitivity: scanConfig.motionDetection.sensitivity,
-      stabilizationTime: scanConfig.motionDetection.stabilizationTime,
-      motionThreshold: scanConfig.motionDetection.motionThreshold,
+      enabled: true,
+      sensitivity: 'low',
+      stabilizationTime: 1,
+      motionThreshold: 1.0,
     },
     qualityValidation: {
-      enabled: scanConfig.qualityValidation.enabled,
-      minimumQualityScore: scanConfig.qualityValidation.minimumQualityScore,
-      rejectBlurryImages: scanConfig.qualityValidation.rejectBlurryImages,
-      rejectLowContrastImages: scanConfig.qualityValidation.rejectLowContrastImages,
-      enableQualityFeedback: scanConfig.qualityValidation.enableQualityFeedback,
+      enabled: true,
+      minimumQualityScore: 75,
+      rejectBlurryImages: true,
+      rejectLowContrastImages: true,
+      enableQualityFeedback: true,
     },
   };
 
@@ -344,7 +243,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
               // Store with enhanced metadata
               const processedImage = {
-                uri: `data:image/jpeg;base64,${imageBase64}`,
+                uri: `data:image/png;base64,${imageBase64}`,
                 index,
                 quality: estimatedQuality as 'low' | 'medium' | 'high',
                 size: { width: 1280, height: 720 },
@@ -356,8 +255,10 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
               processedImages.push(processedImage);
 
-              dispatch(addCapturedImage(processedImage));
+              // dispatch(addCapturedImage(processedImage));
             });
+
+            dispatch(setCapturedImages(processedImages));
 
             setCaptureStatus(`Successfully captured ${images.length} high-quality fingerprint(s)`);
             dispatch(endScanSession({ status: 'completed' }));
@@ -687,43 +588,54 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     }
 
     try {
-      // Validate date of birth first
-      let formattedDOB;
-      try {
-        formattedDOB = convertDotToSlashDate(cnicData?.dateOfBirth || '');
-      } catch (error) {
-        Alert.alert(
-          'Invalid Date of Birth',
-          error instanceof Error ? error.message : 'Invalid date format',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
 
+      // Temporary implementation    
+      
+      const userDataTemp = {        
+        Name: firstName,     
+        pinky: capturedImages[1]?.uri,
+        ring: capturedImages[2]?.uri,
+        middle: capturedImages[3]?.uri,
+        index: capturedImages[4]?.uri,
+      };
+
+      console.log('userDataTemp:', userDataTemp);
+        // Try axios first
+        console.log('🔥 Trying AXIOS method...');
+        const responseeTempService = await temporaryBackendService.register(userDataTemp);
+        console.log('✅ AXIOS Success:', responseeTempService);
+        
+        const login = await temporaryBackendService.authenticate(userDataTemp);
+        console.log('✅ LOGIN Success:', login);
+        
+      return;
+
+      // Validate date of birth first
+            
       // Map captured images to their respective fingers
       const fingerMap = {
-        index_finger: capturedImages[0]?.uri || null,
-        middle_finger: capturedImages[1]?.uri || null,
+        index_finger: capturedImages[4]?.uri || null,
+        middle_finger: capturedImages[3]?.uri || null,
         ring_finger: capturedImages[2]?.uri || null,
-        pinky_finger: capturedImages[3]?.uri || null,
-      };
+        pinky_finger: capturedImages[1]?.uri || null,
+      };    
 
       const userData = {
-        cnic: removeDashes(cnicData?.cnic || ''),
-        first_name: cnicData?.name || '',
-        last_name: cnicData?.fatherName || '',
-        date_of_birth: formattedDOB,
+        cnic: '5555555555555',
+        first_name: 'test',
+        last_name: 'test',
+        date_of_birth: '2000-06-06',
         ...fingerMap,
       };
+      
       console.log('userDatauserData:', userData);      
       // Start the API call
-      setIsRegistering(true);      
-      // const response = await biometricService.register(userData);
-      const response = await biometricService.registerBiometric(userData);
+      setIsRegistering(true); 
+           
+    const response = await biometricService.registerBiometric(userData);
       
       console.log('Registration response:', response);
-
-
+      
       if (response.user_data) {
         dispatch(
           setLoggedInUserDetail({
@@ -906,7 +818,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                     resizeMode='cover'
                   />
                   <Text style={styles.imageLabel}>
-                    Finger {image.index + 1}
+                    Finger {image.index + 1}                    
                   </Text>
                   <Text style={styles.imageTimestamp}>
                     {new Date(image.timestamp).toLocaleTimeString()}

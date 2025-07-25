@@ -143,6 +143,8 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const handleStartCamera = async () => {
+    navigation.navigate('NewScreen');
+    return;
     if (capturedImages.length >= 3) {
       // hit api here to send images for verification
       try {

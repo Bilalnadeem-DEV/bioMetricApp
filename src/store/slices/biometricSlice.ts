@@ -207,6 +207,9 @@ const biometricSlice = createSlice({
         state.currentSession.images = [...state.capturedImages];
       }
     },
+    setCapturedImages: (state, action: PayloadAction<any[]>) => {
+      state.capturedImages = action.payload;
+    },
     removeCapturedImage: (state, action: PayloadAction<number>) => {
       state.capturedImages = state.capturedImages.filter(img => img.index !== action.payload);
       state.scanningProgress = (state.capturedImages.length / 3) * 100;
@@ -413,7 +416,8 @@ export const {
   setCNICData,
   clearCNICData,
   clearCapturedImages,
-  removeLastCapturedImage
+  removeLastCapturedImage,
+  setCapturedImages
 } = biometricSlice.actions;
 
 export default biometricSlice.reducer; 
