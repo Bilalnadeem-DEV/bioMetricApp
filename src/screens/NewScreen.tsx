@@ -270,11 +270,15 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                 : `Captured ${images.length} high-quality fingerprint images!`;
 
             Alert.alert('Capture Complete!', `${qualityMessage}`, [
-              {
-                text: 'View Images',
-                onPress: () => handleSendBiometric(),
-              },
-              { text: 'OK' },
+              // {
+              //   text: 'Register',
+              //   onPress: () => handleSendBiometric(1),
+              // },
+              // {
+              //   text: 'Login', 
+              //   onPress: () => handleSendBiometric(2),
+              // },
+              { text: 'Okay' },
             ]);
           }
         },
@@ -577,7 +581,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     return input.replace(/-/g, '');
   }
 
-  const handleSendBiometric = async () => {
+  const handleSendBiometric = async (type: number) => {
     if (!capturedImages || capturedImages.length < 4) {
       Alert.alert(
         'Missing Fingerprints',
@@ -602,11 +606,51 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       console.log('userDataTemp:', userDataTemp);
         // Try axios first
         console.log('🔥 Trying AXIOS method...');
-        const responseeTempService = await temporaryBackendService.register(userDataTemp);
-        console.log('✅ AXIOS Success:', responseeTempService);
+
+        if (type === 1) {
+          const responseeTempService = await temporaryBackendService.register(userDataTemp);
+          console.log('✅ AXIOS Success:', responseeTempService);
+
+          // Show registration success alert
+          if (responseeTempService && responseeTempService.message) {
+            Alert.alert(
+              '✅ Registration Successful',
+              responseeTempService.message,
+              [{ text: 'OK' }]
+            );
+          }
+
+        } else {
+          const login = await temporaryBackendService.authenticate(userDataTemp);
+          console.log('✅ LOGIN Success:', login);
+                    if (login && typeof login === 'object') {
+            const formatFingerScore = (fingerData: any, fingerName: string) => {
+              if (fingerData && fingerData.score !== undefined) {
+                const matchStatus = fingerData.match ? '✅ MATCHED' : '❌ NOT MATCHED';
+                const score = fingerData.score.toFixed(2);
+                const confidence = fingerData.confidence || 'Unknown';
+                return `${fingerName}: ${matchStatus}\n   Score: ${score} (${confidence})`;
+              }
+              return `${fingerName}: ❓ No data`;
+            };
+
+            const scoreMessage = [
+              formatFingerScore(login.index, 'Index'),
+              formatFingerScore(login.middle, 'Middle'), 
+              formatFingerScore(login.ring, 'Ring'),
+              formatFingerScore(login.pinky, 'Pinky'),
+            ].join('\n\n');
+
+            Alert.alert(
+              '🎯 Authentication Results',
+              `Fingerprint matching results:\n\n${scoreMessage}`,
+              [{ text: 'OK' }]
+            );
+          }
+        }
+
         
-        const login = await temporaryBackendService.authenticate(userDataTemp);
-        console.log('✅ LOGIN Success:', login);
+      
         
       return;
 
@@ -860,8 +904,13 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         <View style={styles.stickyButtonContainer}>
           <TouchableOpacity
             style={[styles.button, styles.sendButton]}
-            onPress={handleSendBiometric}>
-            <Text style={styles.buttonText}>Send for verification</Text>
+            onPress={() => handleSendBiometric(1)}>
+            <Text style={styles.buttonText}>Register</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.sendButton]}
+            onPress={() => handleSendBiometric(2)}>
+            <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
         </View>
       )}
