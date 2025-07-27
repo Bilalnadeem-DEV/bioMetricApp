@@ -88,6 +88,11 @@ android {
         // Fix react-native-camera variant conflict
         missingDimensionStrategy 'react-native-camera', 'general'
     }
+    sourceSets {
+        main {
+            assets.srcDirs += 'src/main/assets'
+        }
+    }
     
     // Fix react-native-camera variant conflict
     configurations.all {
