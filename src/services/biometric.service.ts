@@ -192,8 +192,8 @@ const authenticate = async (data: AuthenticationData): Promise<AuthenticationRes
 
       return {
         uri: uri,
-        type: 'image/jpeg',
-        name: `${fingerName}.jpg`,
+        type: 'image/png',
+        name: `${fingerName}.png`,
       };
     };
 

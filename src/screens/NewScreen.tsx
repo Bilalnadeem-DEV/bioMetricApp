@@ -593,68 +593,80 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
 
     try {
 
-      // Temporary implementation    
+      // // Temporary implementation    
       
-      const userDataTemp = {        
-        Name: firstName,     
-        pinky: capturedImages[1]?.uri,
-        ring: capturedImages[2]?.uri,
-        middle: capturedImages[3]?.uri,
-        index: capturedImages[4]?.uri,
-      };
+      // const userDataTemp = {        
+      //   Name: firstName,     
+      //   pinky: capturedImages[1]?.uri,
+      //   ring: capturedImages[2]?.uri,
+      //   middle: capturedImages[3]?.uri,
+      //   index: capturedImages[4]?.uri,
+      // };
 
-      console.log('userDataTemp:', userDataTemp);
-        // Try axios first
-        console.log('🔥 Trying AXIOS method...');
+      // console.log('userDataTemp:', userDataTemp);
+      //   // Try axios first
+      //   console.log('🔥 Trying AXIOS method...');
 
-        if (type === 1) {
-          const responseeTempService = await temporaryBackendService.register(userDataTemp);
-          console.log('✅ AXIOS Success:', responseeTempService);
+      //   if (type === 1) {
+      //     const responseeTempService = await temporaryBackendService.register(userDataTemp);
+      //     console.log('✅ AXIOS Success:', responseeTempService);
 
-          // Show registration success alert
-          if (responseeTempService && responseeTempService.message) {
-            Alert.alert(
-              '✅ Registration Successful',
-              responseeTempService.message,
-              [{ text: 'OK' }]
-            );
-          }
+      //     // Show registration success alert
+      //     if (responseeTempService && responseeTempService.message) {
+      //       Alert.alert(
+      //         '✅ Registration Successful',
+      //         responseeTempService.message,
+      //         [{ text: 'OK' }]
+      //       );
+      //     }
 
-        } else {
-          const login = await temporaryBackendService.authenticate(userDataTemp);
-          console.log('✅ LOGIN Success:', login);
-                    if (login && typeof login === 'object') {
-            const formatFingerScore = (fingerData: any, fingerName: string) => {
-              if (fingerData && fingerData.score !== undefined) {
-                const matchStatus = fingerData.match ? '✅ MATCHED' : '❌ NOT MATCHED';
-                const score = fingerData.score.toFixed(2);
-                const confidence = fingerData.confidence || 'Unknown';
-                return `${fingerName}: ${matchStatus}\n   Score: ${score} (${confidence})`;
-              }
-              return `${fingerName}: ❓ No data`;
-            };
+      //   } else {
+      //     const login = await temporaryBackendService.authenticate(userDataTemp);
+      //     console.log('✅ LOGIN Success:', login);
+      //               if (login && typeof login === 'object') {
+      //       const formatFingerScore = (fingerData: any, fingerName: string) => {
+      //         if (fingerData && fingerData.score !== undefined) {
+      //           const matchStatus = fingerData.match ? '✅ MATCHED' : '❌ NOT MATCHED';
+      //           const score = fingerData.score.toFixed(2);
+      //           const confidence = fingerData.confidence || 'Unknown';
+      //           return `${fingerName}: ${matchStatus}\n   Score: ${score} (${confidence})`;
+      //         }
+      //         return `${fingerName}: ❓ No data`;
+      //       };
 
-            const scoreMessage = [
-              formatFingerScore(login.index, 'Index'),
-              formatFingerScore(login.middle, 'Middle'), 
-              formatFingerScore(login.ring, 'Ring'),
-              formatFingerScore(login.pinky, 'Pinky'),
-            ].join('\n\n');
+      //       const scoreMessage = [
+      //         formatFingerScore(login.index, 'Index'),
+      //         formatFingerScore(login.middle, 'Middle'), 
+      //         formatFingerScore(login.ring, 'Ring'),
+      //         formatFingerScore(login.pinky, 'Pinky'),
+      //       ].join('\n\n');
 
-            Alert.alert(
-              '🎯 Authentication Results',
-              `Fingerprint matching results:\n\n${scoreMessage}`,
-              [{ text: 'OK' }]
-            );
-          }
-        }
+      //       Alert.alert(
+      //         '🎯 Authentication Results',
+      //         `Fingerprint matching results:\n\n${scoreMessage}`,
+      //         [{ text: 'OK' }]
+      //       );
+      //     }
+      //   }
 
         
       
         
-      return;
+      // return;
 
       // Validate date of birth first
+      let formattedDOB;
+      try {
+        formattedDOB = convertDotToSlashDate(cnicData?.dateOfBirth || '');
+      } catch (error) {
+        Alert.alert(
+          'Invalid Date of Birth',
+          error instanceof Error ? error.message : 'Invalid date format',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
             
       // Map captured images to their respective fingers
       const fingerMap = {
@@ -662,13 +674,18 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         middle_finger: capturedImages[3]?.uri || null,
         ring_finger: capturedImages[2]?.uri || null,
         pinky_finger: capturedImages[1]?.uri || null,
-      };    
+      };
 
       const userData = {
-        cnic: '5555555555555',
-        first_name: 'test',
-        last_name: 'test',
-        date_of_birth: '2000-06-06',
+        // cnic: '5555555555555',
+        // first_name: 'test',
+        // last_name: 'test',
+        // date_of_birth: '2000-06-06',
+        cnic: removeDashes(cnicData?.cnic || ''),
+        first_name: cnicData?.name || '',
+        last_name: cnicData?.fatherName || '',
+        date_of_birth: formattedDOB,
+
         ...fingerMap,
       };
       
@@ -907,11 +924,11 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             onPress={() => handleSendBiometric(1)}>
             <Text style={styles.buttonText}>Register</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.button, styles.sendButton]}
             onPress={() => handleSendBiometric(2)}>
             <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       )}
 

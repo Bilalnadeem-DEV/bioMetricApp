@@ -142,15 +142,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 
               </View>
             )}
-          </View> 
-
-          <TouchableOpacity
-                style={[styles.button, styles.newScreenButton]}
-                onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.buttonText}>Bypassed signup</Text>
-          </TouchableOpacity>
-
-          {/* {!isRegistered ? (
+          </View>        
+          {!isRegistered ? (
           // {false ? (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -164,7 +157,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <Text style={styles.buttonText}>Login</Text>
               </TouchableOpacity>
             </View>
-          ): <></>} */}
+          ): <></>}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -516,10 +516,10 @@ const BiometricLogin: React.FC<BiometricLoginProps> = ({ navigation }) => {
     try {
       // Map captured images to their respective fingers
       const fingerMap = {
-        index_finger: capturedImages[0]?.uri || null,
-        middle_finger: capturedImages[1]?.uri || null,
+        index_finger: capturedImages[4]?.uri || null,
+        middle_finger: capturedImages[3]?.uri || null,
         ring_finger: capturedImages[2]?.uri || null,
-        pinky_finger: capturedImages[3]?.uri || null,
+        pinky_finger: capturedImages[1]?.uri || null,
       };
 
       // Get CNIC from user store or use a default for testing
