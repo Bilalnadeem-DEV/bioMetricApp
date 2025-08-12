@@ -2,6 +2,7 @@ import { AxiosResponse } from 'axios';
 import api from './api';
 import axios from 'axios';
 import { Platform } from 'react-native';
+import { BASE_URLS } from '../constants/apiEndpoints';
 
 interface BiometricRegistrationData {
   cnic: string;
@@ -70,6 +71,21 @@ interface UserVerificationResponse {
   cnic: string;
   is_verified: boolean;
   updated_at: string;
+}
+
+// Add blur detection interfaces
+interface BlurDetectionResult {
+  filename: string;
+  is_edge_blurred: boolean;
+  edge_quality: number;
+}
+
+interface BlurDetectionResponse {
+  results: BlurDetectionResult[];
+}
+
+interface BlurDetectionData {
+  files: string[]; // Array of image URIs
 }
 
 const register = async (data: BiometricRegistrationData): Promise<any> => {
@@ -435,13 +451,123 @@ const updateUserVerification = async (cnic: string, isVerified: boolean): Promis
   }
 };
 
+/**
+ * Analyze fingerprint images for blur detection
+ */
+const blurDetection = async (data: BlurDetectionData): Promise<BlurDetectionResponse> => {
+  try {
+    console.log('Starting blur detection analysis for images:', data.files.length);
+
+    // Create FormData instance
+    const formData = new FormData();
+
+    // Helper function to create file object for React Native
+    const createFileObject = (uri: string, index: number) => {
+      // Extract filename from URI or use default
+      const fileName = uri.split('/').pop() || `fingerprint_${index}.jpg`;
+      
+      // Handle Android file paths
+      const fileUri = Platform.OS === 'android' 
+        ? uri.replace('file://', '') // Remove file:// for Android
+        : uri;
+
+      const file = {
+        uri: fileUri,
+        type: 'image/jpeg',
+        name: fileName
+      };
+
+      console.log(`Created file object for image ${index}:`, {
+        originalUri: uri,
+        processedUri: fileUri,
+        fileName,
+        platform: Platform.OS
+      });
+
+      return file;
+    };
+
+    // Add all files to FormData
+    data.files.forEach((fileUri, index) => {
+      const file = createFileObject(fileUri, index);
+      formData.append('files', file);
+    });
+
+    // Create config object for blur detection API
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${BASE_URLS.BLUR_DETECTION_SERVER}analyze-fingerprint`,
+      timeout: 60000,
+      headers: Platform.select({
+        android: {
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+        ios: {
+          Accept: 'application/json',
+        },
+      }),
+      transformRequest: Platform.OS === 'android' ? [(data: any): any => {
+        return data;
+      }] : undefined,
+      data: formData
+    };
+
+    console.log('Blur detection request configuration:', {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      fileCount: data.files.length,
+      platform: Platform.OS
+    });
+
+    // Make the request
+    const response = await axios.request(config);
+    
+    console.log('Blur detection analysis success:', {
+      status: response.status,
+      statusText: response.statusText,
+      resultCount: response.data.results?.length
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Blur detection error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      platform: Platform.OS
+    });
+
+    if (!error.response) {
+      throw new Error(`Network error (${Platform.OS}). Please check your internet connection and try again.`);
+    }
+
+    switch (error.response.status) {
+      case 400:
+        throw new Error(error.response.data?.message || 'Invalid input data. Please check the image files.');
+      case 413:
+        throw new Error('Image file size too large. Please use smaller images.');
+      case 415:
+        throw new Error('Invalid image format. Please use JPEG images.');
+      case 422:
+        throw new Error('Unable to process the image. Please ensure it\'s a valid fingerprint image.');
+      default:
+        throw new Error(error.response.data?.message || 'Blur detection analysis failed. Please try again.');
+    }
+  }
+};
+
 // Export both functions
 export const biometricService = {
   register,
   registerBiometric,
   getUserDetails,
   authenticate,
-  updateUserVerification
+  updateUserVerification,
+  blurDetection
 };
 
 export default biometricService; 

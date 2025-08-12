@@ -184,7 +184,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     dispatch(clearCapturedImages())
     dispatch(setCurrentImageIndex(0))      
     navigation.navigate('SignupInstruction');
-    // navigation.navigate('ScanPrep');
+    // navigation.navigate('Register'); 
   };
 
   const handleLogout = () => {

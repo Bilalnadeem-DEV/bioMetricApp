@@ -207,10 +207,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     return true;
   };
 
-  const handleRegister = async () => {
-    dispatch(setUserFirstName(firstName))
-    navigation.navigate('NewScreen');
-    return
+  const handleRegister = async () => {    
     // Dismiss keyboard before processing
     Keyboard.dismiss();
     firstNameInputRef.current?.blur();
@@ -412,10 +409,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity 
             style={[
               styles.registerButton,
-              // (!cnic.trim() || !firstName.trim() || !lastName.trim() || !dateOfBirth.trim()) && styles.registerButtonDisabled
+              (!cnic.trim() || !firstName.trim() || !lastName.trim() || !dateOfBirth.trim()) && styles.registerButtonDisabled
             ]} 
             onPress={handleRegister}
-            // disabled={!cnic.trim() || !firstName.trim() || !lastName.trim() || !dateOfBirth.trim()}
+            disabled={!cnic.trim() || !firstName.trim() || !lastName.trim() || !dateOfBirth.trim()}
           >
             <Text style={styles.buttonText}>Continue to Biometric Scan</Text>
           </TouchableOpacity>

@@ -735,7 +735,11 @@ const ScanPrepScreen: React.FC<Props> = ({ navigation, route }) => {
                   : dispatch(clearCapturedImages());
                 dispatch(setCurrentImageIndex(0));
               }}>
-              <Text style={styles.modalButtonText}>Move to next step of verification</Text>
+              <Text style={styles.modalButtonText}>
+              {
+                verificationResult?.isVerified ? 'Move to next step of verification' : 'Try Again'
+              }              
+                </Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -44,8 +44,10 @@ interface NewScreenProps {
 const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const dispatch = useAppDispatch();
 
+  const isForBiometricOnly = false;
+
   // Get data from Redux store
-  
+
   const {
     capturedImages,
     isScanning,
@@ -67,7 +69,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   const scanConfig = useAppSelector(state => state.scan);
   const userName = useAppSelector(state => state.user.name);
 
-  useEffect(() => {     
+  useEffect(() => {
     // setShowInstructions(true)
     const loadSDK = async () => {
       try {
@@ -87,8 +89,8 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     loadSDK();
   }, [dispatch]);
 
-  useEffect(() => {   
-    dispatch(clearCapturedImages());  
+  useEffect(() => {
+    dispatch(clearCapturedImages());
   }, []);
 
   const config = {
@@ -147,7 +149,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     helpText: {
       enabled: true,
       messages: {
-        leftHandMessage: 
+        leftHandMessage:
           'Place your left hand (without thumb)\nUse the optimal lighting conditions.',
         rightHandMessage:
           'Place your right hand (without thumb)\nuntil the marker is centered.\nHold steady for sharp images.',
@@ -155,7 +157,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           'Place your thumbs\nuntil the marker is centered.\nHold steady for sharp images.',
       },
       textColor: ColorPalettes.text.light,
-      textSize: 20,      
+      textSize: 20,
     },
     fingerEllipse: {
       enabled: true,
@@ -275,7 +277,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
               //   onPress: () => handleSendBiometric(1),
               // },
               // {
-              //   text: 'Login', 
+              //   text: 'Login',
               //   onPress: () => handleSendBiometric(2),
               // },
               { text: 'Okay' },
@@ -520,6 +522,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
   };
 
   function convertToISODate(dateStr: string) {
+    console.log('dateStr:', dateStr);
     // Check if the date string matches the expected format (DD/MM/YYYY)
     const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
     if (!dateRegex.test(dateStr)) {
@@ -542,7 +545,9 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     // Validate day based on month
     const daysInMonth = new Date(year, month, 0).getDate();
     if (day < 1 || day > daysInMonth) {
-      throw new Error(`Invalid day for the selected month. Day must be between 1 and ${daysInMonth}`);
+      throw new Error(
+        `Invalid day for the selected month. Day must be between 1 and ${daysInMonth}`,
+      );
     }
 
     // Check if the date is not in the future
@@ -552,9 +557,13 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     }
 
     // Calculate age
-    const age = currentYear - year - 
-      (new Date().getMonth() < month - 1 || 
-       (new Date().getMonth() === month - 1 && new Date().getDate() < day) ? 1 : 0);
+    const age =
+      currentYear -
+      year -
+      (new Date().getMonth() < month - 1 ||
+      (new Date().getMonth() === month - 1 && new Date().getDate() < day)
+        ? 1
+        : 0);
 
     // Validate minimum and maximum age
     if (age < 18) {
@@ -567,12 +576,12 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     // Format the date as YYYY-MM-DD
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
-  
+
   function convertDotToSlashDate(dateStr: string) {
     if (!/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
       throw new Error('Invalid date format. Expected format: DD.MM.YYYY');
     }
-  
+
     const [day, month, year] = dateStr.split('.');
     return `${year}-${month}-${day}`;
   }
@@ -592,82 +601,24 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
     }
 
     try {
-
-      // // Temporary implementation    
-      
-      // const userDataTemp = {        
-      //   Name: firstName,     
-      //   pinky: capturedImages[1]?.uri,
-      //   ring: capturedImages[2]?.uri,
-      //   middle: capturedImages[3]?.uri,
-      //   index: capturedImages[4]?.uri,
-      // };
-
-      // console.log('userDataTemp:', userDataTemp);
-      //   // Try axios first
-      //   console.log('🔥 Trying AXIOS method...');
-
-      //   if (type === 1) {
-      //     const responseeTempService = await temporaryBackendService.register(userDataTemp);
-      //     console.log('✅ AXIOS Success:', responseeTempService);
-
-      //     // Show registration success alert
-      //     if (responseeTempService && responseeTempService.message) {
-      //       Alert.alert(
-      //         '✅ Registration Successful',
-      //         responseeTempService.message,
-      //         [{ text: 'OK' }]
-      //       );
-      //     }
-
-      //   } else {
-      //     const login = await temporaryBackendService.authenticate(userDataTemp);
-      //     console.log('✅ LOGIN Success:', login);
-      //               if (login && typeof login === 'object') {
-      //       const formatFingerScore = (fingerData: any, fingerName: string) => {
-      //         if (fingerData && fingerData.score !== undefined) {
-      //           const matchStatus = fingerData.match ? '✅ MATCHED' : '❌ NOT MATCHED';
-      //           const score = fingerData.score.toFixed(2);
-      //           const confidence = fingerData.confidence || 'Unknown';
-      //           return `${fingerName}: ${matchStatus}\n   Score: ${score} (${confidence})`;
-      //         }
-      //         return `${fingerName}: ❓ No data`;
-      //       };
-
-      //       const scoreMessage = [
-      //         formatFingerScore(login.index, 'Index'),
-      //         formatFingerScore(login.middle, 'Middle'), 
-      //         formatFingerScore(login.ring, 'Ring'),
-      //         formatFingerScore(login.pinky, 'Pinky'),
-      //       ].join('\n\n');
-
-      //       Alert.alert(
-      //         '🎯 Authentication Results',
-      //         `Fingerprint matching results:\n\n${scoreMessage}`,
-      //         [{ text: 'OK' }]
-      //       );
-      //     }
-      //   }
-
-        
-      
-        
-      // return;
-
       // Validate date of birth first
       let formattedDOB;
-      try {
-        formattedDOB = convertDotToSlashDate(cnicData?.dateOfBirth || '');
-      } catch (error) {
-        Alert.alert(
-          'Invalid Date of Birth',
-          error instanceof Error ? error.message : 'Invalid date format',
-          [{ text: 'OK' }]
-        );
-        return;
+
+      if (isForBiometricOnly) {
+        formattedDOB = convertToISODate(dateOfBirth);
+      } else {
+        try {
+          formattedDOB = convertDotToSlashDate(cnicData?.dateOfBirth || '');
+        } catch (error) {
+          Alert.alert(
+            'Invalid Date of Birth',
+            error instanceof Error ? error.message : 'Invalid date format',
+            [{ text: 'OK' }],
+          );
+          return;
+        }
       }
 
-            
       // Map captured images to their respective fingers
       const fingerMap = {
         index_finger: capturedImages[4]?.uri || null,
@@ -677,26 +628,45 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       };
 
       const userData = {
-        // cnic: '5555555555555',
-        // first_name: 'test',
-        // last_name: 'test',
-        // date_of_birth: '2000-06-06',
-        cnic: removeDashes(cnicData?.cnic || ''),
-        first_name: cnicData?.name || '',
-        last_name: cnicData?.fatherName || '',
+        cnic: isForBiometricOnly ? removeDashes(CNIC) : removeDashes(cnicData?.cnic || ''),
+        first_name: isForBiometricOnly ? firstName : cnicData?.name || '',
+        last_name: isForBiometricOnly ? lastName : cnicData?.fatherName || '',
         date_of_birth: formattedDOB,
-
         ...fingerMap,
       };
-      
-      console.log('userDatauserData:', userData);      
+
+      console.log('userDatauserData:', userData);
       // Start the API call
-      setIsRegistering(true); 
-           
-    const response = await biometricService.registerBiometric(userData);
-      
+      setIsRegistering(true);
+
+      // Convert fingerMap to files array for blur detection
+      const files = Object.values(fingerMap).filter(uri => uri !== null) as string[];
+      const blurDetectionResponse = await biometricService.blurDetection({ files });
+      console.log('Blur detection response:', blurDetectionResponse);
+
+      // Check for edge blur and quality issues in the captured prints
+      const blurIssues = blurDetectionResponse.results.some(result => result.edge_quality < 0.1);
+
+      if (blurIssues) {
+        setIsRegistering(false);
+        Alert.alert(
+          'Image Quality Issue',
+          'One or more fingerprints have quality issues. Please ensure your fingers are properly placed and try again.',
+          [{ text: 'OK' }],
+        );
+        clearBiometricData();
+        setCaptureStatus('Service stopped');
+        setFingerRects([]);
+        setIsRegistering(false);
+        setShowInstructions(false);
+        setShowInstructions(false);
+        return;
+      }
+
+      const response = await biometricService.registerBiometric(userData);
+
       console.log('Registration response:', response);
-      
+
       if (response.user_data) {
         dispatch(
           setLoggedInUserDetail({
@@ -709,7 +679,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         );
       }
       setIsRegistering(false);
-        Alert.alert('Success', 'Biometric verification completed successfully!', [
+      Alert.alert('Success', 'Biometric verification completed successfully!', [
         {
           text: 'OK',
           onPress: () => {
@@ -734,8 +704,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
         text2Style: {
           fontSize: 16,
         },
-      });      
-  
+      });
     } catch (error: any) {
       setIsRegistering(false);
       console.error('Registration failed:', error);
@@ -763,13 +732,11 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
       animationType="fade"
       transparent={true}
       visible={showInstructions}
-      onRequestClose={() => setShowInstructions(false)}
-    >
-      <TouchableOpacity 
+      onRequestClose={() => setShowInstructions(false)}>
+      <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
-        onPress={() => setShowInstructions(false)}
-      >
+        onPress={() => setShowInstructions(false)}>
         <View style={styles.modalContent}>
           <View style={styles.instructionsHeader}>
             <Text style={styles.instructionText}>• Use your left hand</Text>
@@ -780,10 +747,7 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
             style={styles.instructionImage}
             resizeMode="contain"
           />
-          <TouchableOpacity 
-            style={styles.dismissButton}
-            onPress={() => setShowInstructions(false)}
-          >
+          <TouchableOpacity style={styles.dismissButton} onPress={() => setShowInstructions(false)}>
             <Text style={styles.dismissButtonText}>TAP TO DISMISS</Text>
           </TouchableOpacity>
         </View>
@@ -862,13 +826,19 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
           <View style={styles.resultsContainer}>
             <Text style={styles.resultsTitle}>Captured Fingerprints:</Text>
             <Text style={styles.instructionText}>Please verify the following requirements:</Text>
-            <Text style={styles.checklistItem}>✓ All four fingers are clearly visible in the image</Text>
+            <Text style={styles.checklistItem}>
+              ✓ All four fingers are clearly visible in the image
+            </Text>
             <Text style={styles.checklistItem}>✓ The image is sharp and not blurry</Text>
             <Text style={styles.checklistItem}>✓ Each fingerprint has distinct ridge patterns</Text>
             <Text style={styles.checklistItem}>✓ The lighting is adequate and even</Text>
-            <Text style={styles.checklistItem}>✓ The hand position is stable with no motion blur</Text>
+            <Text style={styles.checklistItem}>
+              ✓ The hand position is stable with no motion blur
+            </Text>
             <Text style={styles.checklistItem}>✓ The image quality score is above 75/100</Text>
-            <Text style={[styles.instructionText, styles.warningText]}>⚠️ If any of the above requirements are not met, please retake the fingerprint scan</Text>
+            <Text style={[styles.instructionText, styles.warningText]}>
+              ⚠️ If any of the above requirements are not met, please retake the fingerprint scan
+            </Text>
 
             <View style={styles.imageGrid}>
               {capturedImages.map((image, index) => (
@@ -876,45 +846,39 @@ const NewScreen: React.FC<NewScreenProps> = ({ navigation }) => {
                   <Image
                     source={{ uri: image.uri }}
                     style={styles.fingerprintImage}
-                    resizeMode='cover'
+                    resizeMode="cover"
                   />
-                  <Text style={styles.imageLabel}>
-                    Finger {image.index + 1}                    
-                  </Text>
+                  <Text style={styles.imageLabel}>Finger {image.index + 1}</Text>
                   <Text style={styles.imageTimestamp}>
                     {new Date(image.timestamp).toLocaleTimeString()}
                   </Text>
                   {image.quality && (
-                    <Text style={[
-                      styles.imageQuality,
-                      image.quality === 'high' && styles.qualityHigh,
-                      image.quality === 'medium' && styles.qualityMedium,
-                      image.quality === 'low' && styles.qualityLow,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.imageQuality,
+                        image.quality === 'high' && styles.qualityHigh,
+                        image.quality === 'medium' && styles.qualityMedium,
+                        image.quality === 'low' && styles.qualityLow,
+                      ]}>
                       Quality: {image.quality.toUpperCase()}
                     </Text>
                   )}
                   {image.qualityScore && (
-                    <Text style={styles.qualityScore}>
-                      Score: {image.qualityScore}/100
-                    </Text>
+                    <Text style={styles.qualityScore}>Score: {image.qualityScore}/100</Text>
                   )}
                   {image.fileSize && (
-                    <Text style={styles.fileSize}>
-                      Size: {Math.round(image.fileSize / 1024)}KB
-                    </Text>
+                    <Text style={styles.fileSize}>Size: {Math.round(image.fileSize / 1024)}KB</Text>
                   )}
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.saveImageButton}
-                    onPress={() => saveImageToGallery(image.uri, image.index)}
-                  >
+                    onPress={() => saveImageToGallery(image.uri, image.index)}>
                     <Text style={styles.saveImageButtonText}>💾 Save</Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
           </View>
-        )}      
+        )}
       </ScrollView>
 
       {capturedImages && capturedImages.length > 0 && (
@@ -1431,7 +1395,7 @@ const styles = StyleSheet.create({
   modalText: {
     color: '#FFFFFF',
     fontSize: 20,
-    marginTop: 20,    
+    marginTop: 20,
     textAlign: 'center',
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -1447,7 +1411,7 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 20,
     marginBottom: 10,
-    fontWeight: '600',    
+    fontWeight: '600',
   },
   dismissButton: {
     position: 'absolute',

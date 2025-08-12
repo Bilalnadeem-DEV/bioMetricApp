@@ -7,6 +7,7 @@ export const BASE_URLS = {
   DEVELOPMENT: 'https://fpbiometric.swsam.co.uk/',
   STAGING: 'https://fpbiometric.swsam.co.uk/',
   PRODUCTION: 'https://fpbiometric.swsam.co.uk/',
+  BLUR_DETECTION_SERVER: 'https://api.fpbiometricdemo.swsam.co.uk/',
 
   // DEVELOPMENT: 'http://198.199.81.112:5010/',
   // STAGING: 'http://198.199.81.112:5010/',
